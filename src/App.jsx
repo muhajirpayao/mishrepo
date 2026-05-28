@@ -115,43 +115,84 @@ const PROVIDERS = ["ALL","JILI","SPIN MASTER","FC","PG SOFT","PRAGMATIC PLAY","J
 const CATEGORIES = ["ALL","Baccarat 1%","1.5% Cash Rebate","98%","Live Games","Slot Games","Fishing","Sports"];
 
 
-  // GAME CARD //
+/* ─── GAME CARD ──────────────────────────────────────────────── */
+
 function GameCard({ game, onPlay }) {
   const [hov, setHov] = useState(false);
+
+  const gameImages = {
+    sweetbonanza:
+      "https://cp-images.casinoplus.live/images/cpms/pp/mobile/vs20swbon2500_v10.webp",
+
+    superace:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/49_v10.webp",
+
+    superace2:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/542.webp",
+
+    superace3:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/403_v10.webp",
+
+    fortunegems:
+      "https://storage.googleapis.com/tada-cdn-asia/All-In-One/production/img/jiliPlusPlayer/games/7hnsYn70DF8p9aAUBr9tPoqMjSDbBxzvNhXdrgle.png",
+
+    sugarbang:
+      "https://www.casinoplus.com.ph/cp-games/asset/image/original/gameSectionArticle/mainImage/20241108081308Sl7aWO.webp",
+
+    mines:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/229.webp",
+
+    jackpotfish:
+      "https://cp-images.casinoplus.live/images/cpms/jdb/mobile/8008.webp",
+
+    pokerwin:
+      "https://cp-images.casinoplus.live/images/cpms/fc/mobile/22060_v10.webp",
+
+    luckyfort:
+      "https://cp-images.casinoplus.live/images/cpms/fc/mobile/n22040.webp",
+      fortunegems2:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/223_v10.webp",
+      superagedlx:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/471.webp",
+      jackpotfish:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/32.webp",
+      futurecoin:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/523_v10.webp",
+  };
 
   return (
     <div
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
+      onClick={() => onPlay(game)}
       style={{
         position: "relative",
-        width: "100%",
-        aspectRatio: "3/4",
-        borderRadius: 14,
+        borderRadius: 16,
         overflow: "hidden",
         cursor: "pointer",
         background: "#111",
-        transform: hov ? "translateY(-4px)" : "translateY(0)",
-        transition: "all 0.25s ease",
+        aspectRatio: "0.72",
         boxShadow: hov
-          ? "0 14px 30px rgba(0,0,0,0.7)"
-          : "0 4px 10px rgba(0,0,0,0.45)",
+          ? "0 10px 30px rgba(0,0,0,0.7)"
+          : "0 4px 14px rgba(0,0,0,0.4)",
+        transform: hov ? "translateY(-4px) scale(1.02)" : "scale(1)",
+        transition: "0.22s ease",
       }}
     >
       {/* FULL IMAGE */}
       <img
-        src={
-          game.id === "sweetbonanza"
-            ? "https://tse3.mm.bing.net/th/id/OIP.DHFDPA1uoLfphmkPZKsvwgAAAA?rs=1&pid=ImgDetMain&o=7&rm=3"
-            : "https://via.placeholder.com/500x700/111/333?text=GAME"
-        }
+        src={gameImages[game.id]}
         alt={game.name}
+        draggable={false}
         style={{
           width: "100%",
           height: "100%",
           objectFit: "cover",
           objectPosition: "center",
           display: "block",
+          userSelect: "none",
+          transform: hov ? "scale(1.04)" : "scale(1)",
+          transition: "0.3s ease",
         }}
       />
 
@@ -160,10 +201,8 @@ function GameCard({ game, onPlay }) {
         style={{
           position: "absolute",
           inset: 0,
-          background: hov
-            ? "linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0.08))"
-            : "linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.02))",
-          transition: "0.25s ease",
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.15), transparent)",
         }}
       />
 
@@ -174,14 +213,14 @@ function GameCard({ game, onPlay }) {
             position: "absolute",
             top: 8,
             left: 8,
-            zIndex: 5,
-            background: "linear-gradient(135deg,#ff2d2d,#b10000)",
+            background: "#e60023",
             color: "#fff",
-            fontSize: 8,
+            fontSize: 10,
             fontWeight: 900,
             padding: "4px 8px",
-            borderRadius: 6,
-            letterSpacing: 0.5,
+            borderRadius: 8,
+            zIndex: 3,
+            letterSpacing: 0.4,
           }}
         >
           {game.badge}
@@ -192,15 +231,15 @@ function GameCard({ game, onPlay }) {
         <div
           style={{
             position: "absolute",
-            top: 34,
+            top: 38,
             left: 8,
-            zIndex: 5,
-            background: "linear-gradient(135deg,#ff7b00,#ffb347)",
+            background: "#ff7a00",
             color: "#fff",
-            fontSize: 8,
+            fontSize: 9,
             fontWeight: 900,
-            padding: "4px 8px",
-            borderRadius: 6,
+            padding: "3px 7px",
+            borderRadius: 7,
+            zIndex: 3,
           }}
         >
           HOT
@@ -213,94 +252,52 @@ function GameCard({ game, onPlay }) {
             position: "absolute",
             top: 8,
             right: 8,
-            zIndex: 5,
-            width: 34,
-            height: 34,
+            width: 38,
+            height: 38,
             borderRadius: "50%",
-            background: "linear-gradient(135deg,#ffb000,#ff6200)",
+            background: "linear-gradient(135deg,#ff9f00,#ff6a00)",
+            color: "#fff",
+            fontWeight: 900,
+            fontSize: 13,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: 11,
-            boxShadow: "0 0 14px rgba(255,140,0,0.8)",
+            zIndex: 3,
+            boxShadow: "0 0 14px rgba(255,140,0,0.7)",
           }}
         >
           {game.bonus}
         </div>
       )}
 
-      {/* PLAY BUTTON */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: hov ? 1 : 0,
-          transition: "0.25s ease",
-        }}
-      >
-        <button
-          onClick={() => onPlay(game)}
-          style={{
-            background: "linear-gradient(135deg,#00c853,#009624)",
-            border: "none",
-            borderRadius: 30,
-            padding: "12px 24px",
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: 13,
-            cursor: "pointer",
-            boxShadow: "0 5px 18px rgba(0,200,83,0.55)",
-            letterSpacing: 1,
-          }}
-        >
-          ▶ PLAY NOW
-        </button>
-      </div>
-
-      {/* BOTTOM LABEL */}
+      {/* HOVER PLAY */}
       <div
         style={{
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: hov ? 0 : -80,
-          zIndex: 6,
-          padding: "14px 10px 12px",
-          background:
-            "linear-gradient(to top, rgba(0,0,0,0.96), rgba(0,0,0,0))",
-          transition: "all 0.25s ease",
-          textAlign: "center",
+          bottom: hov ? 16 : -80,
+          display: "flex",
+          justifyContent: "center",
+          transition: "0.25s ease",
+          zIndex: 5,
         }}
       >
-        <div
+        <button
           style={{
+            background: "linear-gradient(135deg,#00d84a,#00a63a)",
+            border: "none",
             color: "#fff",
-            fontSize: 14,
             fontWeight: 900,
-            lineHeight: 1.2,
-            textShadow: "0 2px 10px rgba(0,0,0,0.9)",
+            fontSize: 13,
+            borderRadius: 999,
+            padding: "10px 26px",
+            cursor: "pointer",
+            boxShadow: "0 6px 18px rgba(0,216,74,0.5)",
           }}
         >
-          {game.name}
-        </div>
-
-        <div
-          style={{
-            marginTop: 4,
-            color: "rgba(255,255,255,0.7)",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: 0.5,
-          }}
-        >
-          {game.provider}
-        </div>
+          PLAY
+        </button>
       </div>
     </div>
   );
