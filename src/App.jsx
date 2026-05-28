@@ -156,8 +156,20 @@ function GameCard({ game, onPlay }) {
       "https://cp-images.casinoplus.live/images/cpms/jili/mobile/471.webp",
       jackpotfish:
       "https://cp-images.casinoplus.live/images/cpms/jili/mobile/32.webp",
-      futurecoin:
+      fortunecoin:
       "https://cp-images.casinoplus.live/images/cpms/jili/mobile/523_v10.webp",
+      cloudprinc:
+      "https://cp-images.casinoplus.live/images/cpms/ALL_GAME/3202/201455.webp",
+      riseofatlas:
+      "https://cp-images.casinoplus.live/images/cpms/ALL_GAME/3202/201456.webp",
+      goldemp:
+      "https://cp-images.casinoplus.live/images/cpms/jili/mobile/103_v10.webp",
+      wanted:
+      "https://cp-images.casinoplus.live/images/cpms/26-05/3202_201078_260519195920.webp",
+      atlas: "https://cp-images.casinoplus.live/images/cpms/ALL_GAME/3202/201456.webp",
+      pirates: "https://cp-images.casinoplus.live/images/cpms/ALL_GAME/3202/201118.webp",
+      zombiepar: "https://cp-images.casinoplus.live/images/cpms/jili/mobile/252.webp",
+      mermaid: "https://cp-images.casinoplus.live/images/cpms/fc/mobile/n22032.webp",
   };
 
   return (
