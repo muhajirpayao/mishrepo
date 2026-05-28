@@ -19,29 +19,15 @@ const G = {
 
 /* ─── LOGO ───────────────────────────────────────────────────── */
 function Logo({ small }) {
+  const letters = [["M","#e74c3c"],["I","#e67e22"],["S","#f1c40f"],["S","#2ecc71"],["A","#3498db"],["L","#9b59b6"]];
   return (
     <div style={{ display:"flex", alignItems:"center", gap:small?3:6 }}>
-      <span
-        style={{
-          color:"#fff",
-          fontWeight:900,
-          fontSize: small ? 10 : 18,
-          letterSpacing:1,
-        }}
-      >
-        MISHAL
-      </span>
-
-      <span
-        style={{
-          color:G.gold,
-          fontWeight:900,
-          fontSize: small ? 10 : 15,
-          letterSpacing:1,
-        }}
-      >
-        CASINO
-      </span>
+      <div style={{ background:"#fff", borderRadius:5, padding: small?"2px 4px":"3px 6px", display:"flex", gap:1 }}>
+        {letters.map(([c,col],i)=>(
+          <span key={i} style={{ color:col, fontWeight:900, fontSize:small?10:14, lineHeight:1 }}>{c}</span>
+        ))}
+      </div>
+      <span style={{ color:G.gold, fontWeight:900, fontSize:small?11:15, letterSpacing:1 }}>PLUS</span>
     </div>
   );
 }
