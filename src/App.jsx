@@ -114,99 +114,194 @@ const GAMES = [
 const PROVIDERS = ["ALL","JILI","SPIN MASTER","FC","PG SOFT","PRAGMATIC PLAY","JDB"];
 const CATEGORIES = ["ALL","Baccarat 1%","1.5% Cash Rebate","98%","Live Games","Slot Games","Fishing","Sports"];
 
-/* ─── GAME CARD ──────────────────────────────────────────────── */
+
+  // GAME CARD //
 function GameCard({ game, onPlay }) {
   const [hov, setHov] = useState(false);
+
   return (
     <div
-      onMouseEnter={()=>setHov(true)}
-      onMouseLeave={()=>setHov(false)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
-        borderRadius:10, overflow:"hidden", cursor:"pointer",
-        background: game.bg, position:"relative",
-        transform: hov ? "translateY(-4px) scale(1.02)" : "none",
-        transition:"transform 0.2s, box-shadow 0.2s",
-        boxShadow: hov ? "0 12px 30px rgba(0,0,0,0.7)" : "0 3px 10px rgba(0,0,0,0.4)",
-        aspectRatio:"3/4",
+        position: "relative",
+        width: "100%",
+        aspectRatio: "3/4",
+        borderRadius: 14,
+        overflow: "hidden",
+        cursor: "pointer",
+        background: "#111",
+        transform: hov ? "translateY(-4px)" : "translateY(0)",
+        transition: "all 0.25s ease",
+        boxShadow: hov
+          ? "0 14px 30px rgba(0,0,0,0.7)"
+          : "0 4px 10px rgba(0,0,0,0.45)",
       }}
     >
-      {/* Badges */}
+      {/* FULL IMAGE */}
+      <img
+        src={
+          game.id === "sweetbonanza"
+            ? "https://tse3.mm.bing.net/th/id/OIP.DHFDPA1uoLfphmkPZKsvwgAAAA?rs=1&pid=ImgDetMain&o=7&rm=3"
+            : "https://via.placeholder.com/500x700/111/333?text=GAME"
+        }
+        alt={game.name}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          display: "block",
+        }}
+      />
+
+      {/* DARK OVERLAY */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: hov
+            ? "linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0.08))"
+            : "linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.02))",
+          transition: "0.25s ease",
+        }}
+      />
+
+      {/* BADGES */}
       {game.badge && (
-        <div style={{
-          position:"absolute", top:4, left:4, zIndex:2,
-          background:"linear-gradient(135deg,#dc2626,#991b1b)",
-          color:"#fff", fontSize:7, fontWeight:900,
-          padding:"2px 5px", borderRadius:3, letterSpacing:0.5,
-          boxShadow:"0 2px 8px rgba(220,38,38,0.6)",
-        }}>{game.badge}</div>
-      )}
-      {game.bonus && (
-        <div style={{
-          position:"absolute", top:4, right:4, zIndex:2,
-          background:"linear-gradient(135deg,#d97706,#b45309)",
-          color:"#fff", fontSize:9, fontWeight:900,
-          width:22, height:22, borderRadius:"50%",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow:"0 2px 8px rgba(217,119,6,0.8)",
-        }}>{game.bonus}</div>
-      )}
-      {game.hot && (
-        <div style={{
-          position:"absolute", top: game.badge ? 22 : 4, left:4, zIndex:2,
-          background:"linear-gradient(135deg,#ff6b35,#f7c59f)",
-          color:"#fff", fontSize:7, fontWeight:900,
-          padding:"2px 5px", borderRadius:3,
-        }}>HOT</div>
-      )}
-      {/* Content */}
-      <div style={{
-        height:"100%", display:"flex", flexDirection:"column",
-        alignItems:"center", justifyContent:"center", padding:"8px 6px 6px",
-        gap:4,
-      }}>
-        <div style={{ fontSize:42, filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.5))" }}>{game.emoji}</div>
-        <div style={{
-          fontSize:10, fontWeight:800, color:"#fff", textAlign:"center",
-          textShadow:"0 1px 6px rgba(0,0,0,0.8)", lineHeight:1.2,
-          padding:"0 4px",
-        }}>{game.name}</div>
-        <div style={{ fontSize:8, color:"rgba(255,255,255,0.5)", fontWeight:600 }}>{game.provider}</div>
-        {game.jackpot && (
-          <div style={{
-            fontSize:8, color:G.gold, fontWeight:800,
-            background:"rgba(0,0,0,0.5)", padding:"2px 5px", borderRadius:3, letterSpacing:0.3,
-          }}>{game.jackpot}</div>
-        )}
-      </div>
-      {/* Hover overlay */}
-      {hov && (
-        <div style={{
-          position:"absolute", inset:0,
-          background:"rgba(0,0,0,0.6)",
-          display:"flex", flexDirection:"column",
-          alignItems:"center", justifyContent:"center",
-          gap:6, borderRadius:10,
-        }}>
-          <button
-            onClick={()=>onPlay(game)}
-            style={{
-              background:"linear-gradient(135deg,#00c853,#009624)",
-              border:"none", borderRadius:20,
-              padding:"8px 20px", color:"#fff",
-              fontWeight:900, fontSize:12, cursor:"pointer",
-              boxShadow:"0 4px 14px rgba(0,200,83,0.5)",
-              letterSpacing:0.5,
-            }}
-          >▶ PLAY NOW</button>
-          <button style={{
-            background:"rgba(255,255,255,0.1)",
-            border:"1px solid rgba(255,255,255,0.2)",
-            borderRadius:20, padding:"5px 16px",
-            color:"rgba(255,255,255,0.8)", fontSize:10,
-            cursor:"pointer", fontWeight:600,
-          }}>Try Demo</button>
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            zIndex: 5,
+            background: "linear-gradient(135deg,#ff2d2d,#b10000)",
+            color: "#fff",
+            fontSize: 8,
+            fontWeight: 900,
+            padding: "4px 8px",
+            borderRadius: 6,
+            letterSpacing: 0.5,
+          }}
+        >
+          {game.badge}
         </div>
       )}
+
+      {game.hot && (
+        <div
+          style={{
+            position: "absolute",
+            top: 34,
+            left: 8,
+            zIndex: 5,
+            background: "linear-gradient(135deg,#ff7b00,#ffb347)",
+            color: "#fff",
+            fontSize: 8,
+            fontWeight: 900,
+            padding: "4px 8px",
+            borderRadius: 6,
+          }}
+        >
+          HOT
+        </div>
+      )}
+
+      {game.bonus && (
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 5,
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg,#ffb000,#ff6200)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontWeight: 900,
+            fontSize: 11,
+            boxShadow: "0 0 14px rgba(255,140,0,0.8)",
+          }}
+        >
+          {game.bonus}
+        </div>
+      )}
+
+      {/* PLAY BUTTON */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 4,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: hov ? 1 : 0,
+          transition: "0.25s ease",
+        }}
+      >
+        <button
+          onClick={() => onPlay(game)}
+          style={{
+            background: "linear-gradient(135deg,#00c853,#009624)",
+            border: "none",
+            borderRadius: 30,
+            padding: "12px 24px",
+            color: "#fff",
+            fontWeight: 900,
+            fontSize: 13,
+            cursor: "pointer",
+            boxShadow: "0 5px 18px rgba(0,200,83,0.55)",
+            letterSpacing: 1,
+          }}
+        >
+          ▶ PLAY NOW
+        </button>
+      </div>
+
+      {/* BOTTOM LABEL */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: hov ? 0 : -80,
+          zIndex: 6,
+          padding: "14px 10px 12px",
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.96), rgba(0,0,0,0))",
+          transition: "all 0.25s ease",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 900,
+            lineHeight: 1.2,
+            textShadow: "0 2px 10px rgba(0,0,0,0.9)",
+          }}
+        >
+          {game.name}
+        </div>
+
+        <div
+          style={{
+            marginTop: 4,
+            color: "rgba(255,255,255,0.7)",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: 0.5,
+          }}
+        >
+          {game.provider}
+        </div>
+      </div>
     </div>
   );
 }
