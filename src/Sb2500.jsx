@@ -1,26 +1,37 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-/* ══════════════════════════════════════════════════════════════
-   SWEET BONANZA 2500 — Full Playable Slot
-   6×5 grid, cluster pays (8+), tumble mechanic, free spins
-══════════════════════════════════════════════════════════════ */
-
 const SYMBOLS = [
-  { id:"lollipop",   emoji:"🍭", label:"Lollipop",   color:"#ff69b4", mult:[0,0,0,0,0,0,0,0,36.4,50,100,150,200,750],   scatter:true  },
-  { id:"grape",      emoji:"🍇", label:"Grape",      color:"#9b59b6", mult:[0,0,0,0,0,0,0,0,1.5,2,5,10,25,100]  },
-  { id:"apple",      emoji:"🍎", label:"Apple",      color:"#e74c3c", mult:[0,0,0,0,0,0,0,0,1,1.5,4,8,20,75]   },
-  { id:"watermelon", emoji:"🍉", label:"Watermelon", color:"#27ae60", mult:[0,0,0,0,0,0,0,0,0.8,1.2,3,6,15,60]  },
-  { id:"plum",       emoji:"🍑", label:"Plum",       color:"#e67e22", mult:[0,0,0,0,0,0,0,0,0.5,0.8,2,4,10,40]  },
-  { id:"banana",     emoji:"🍌", label:"Banana",     color:"#f1c40f", mult:[0,0,0,0,0,0,0,0,0.4,0.6,1.5,3,8,25]  },
-  { id:"candy_blue", emoji:"🍬", label:"Blue Candy", color:"#3498db", mult:[0,0,0,0,0,0,0,0,0.3,0.5,1,2,5,15]  },
-  { id:"heart",      emoji:"💝", label:"Heart",      color:"#e91e63", mult:[0,0,0,0,0,0,0,0,0.2,0.4,0.8,1.5,3,10]  },
+  { id:"lollipop",   img:"https://i.pinimg.com/736x/eb/19/17/eb1917189c52172119467aa320d20b07.jpg", label:"Lollipop",   color:"#ff69b4", mult:[0,0,0,0,0,0,0,0,36.4,50,100,150,200,750], scatter:true },
+  { id:"grape",      emoji:"https://i.pinimg.com/736x/63/52/50/635250986165fb88dc9aae0c39ced57d.jpg", label:"Grape",      color:"#9b59b6", mult:[0,0,0,0,0,0,0,0,1.5,2,5,10,25,100] },
+  { id:"apple",      img:"https://i.pinimg.com/736x/f3/e3/83/f3e38314103ac7d2ded97e8bc771a43b.jpg", label:"Apple", color:"#e74c3c", mult:[0,0,0,0,0,0,0,0,1,1.5,4,8,20,75] },
+  { id:"watermelon", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc_MSrpNk0n48iq-EqKUOlCIbfVcuNSXmmBA&s", label:"Watermelon", color:"#27ae60", mult:[0,0,0,0,0,0,0,0,0.8,1.2,3,6,15,60] },
+  { id:"plum",       emoji:"https://i.pinimg.com/736x/27/f8/3d/27f83d803052c68ed11c2db0f3a0b5cd.jpg", label:"Plum",       color:"#e67e22", mult:[0,0,0,0,0,0,0,0,0.5,0.8,2,4,10,40] },
+  { id:"banana",     img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYGjIvT4IvOwxFcbnVmk6Gdl-TtUWO6louDfjurWxguA&s", label:"Banana",     color:"#f1c40f", mult:[0,0,0,0,0,0,0,0,0.4,0.6,1.5,3,8,25] },
+  { id:"candy_blue", img:"https://i.pinimg.com/736x/e6/f0/25/e6f025e324cd91bb88ff3512ffc276d3.jpg", label:"Blue Candy", color:"#3498db", mult:[0,0,0,0,0,0,0,0,0.3,0.5,1,2,5,15] },
+  { id:"heart",      img:"https://i.pinimg.com/736x/f0/e4/de/f0e4de27fe8e17576c838e2817134dcb.jpg", label:"Heart", color:"#e91e63", mult:[0,0,0,0,0,0,0,0,0.2,0.4,0.8,1.5,3,10] },
 ];
 
 const COLS = 6, ROWS = 5;
-const WEIGHTS = [3, 8, 10, 12, 14, 16, 18, 19]; // lollipop rare as scatter
+const WEIGHTS = [3, 8, 10, 12, 14, 16, 18, 19];
+const BET_OPTS = [0.20, 0.40, 0.60, 1.00, 2.00, 4.00, 6.00, 10.00, 20.00, 40.00, 100.00];
+
+const WIN_NOTICES = [
+  { name:"Ash****",  amount:"₱12,450" },
+  { name:"Mar****",  amount:"₱8,200"  },
+  { name:"Jun****",  amount:"₱31,000" },
+  { name:"Kri****",  amount:"₱5,750"  },
+  { name:"Ric****",  amount:"₱18,900" },
+  { name:"Jen****",  amount:"₱9,300"  },
+  { name:"Dan****",  amount:"₱42,600" },
+  { name:"Lyn****",  amount:"₱7,100"  },
+  { name:"Bel****",  amount:"₱23,500" },
+  { name:"Rod****",  amount:"₱15,800" },
+  { name:"Cel****",  amount:"₱6,400"  },
+  { name:"Vin****",  amount:"₱88,000" },
+];
 
 function weightedRandom() {
-  const total = WEIGHTS.reduce((a,b)=>a+b,0);
+  const total = WEIGHTS.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
   for (let i = 0; i < WEIGHTS.length; i++) {
     r -= WEIGHTS[i];
@@ -35,7 +46,6 @@ function makeGrid() {
   );
 }
 
-// BFS cluster finder — minimum 8 same symbol (non-scatter)
 function findClusters(grid) {
   const visited = Array.from({ length: ROWS }, () => new Array(COLS).fill(false));
   const clusters = [];
@@ -50,8 +60,8 @@ function findClusters(grid) {
           const [cr, cc] = queue.shift();
           cells.push([cr, cc]);
           for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
-            const nr = cr+dr, nc = cc+dc;
-            if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!visited[nr][nc]&&grid[nr][nc].sym.id===sym.id) {
+            const nr = cr + dr, nc = cc + dc;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !visited[nr][nc] && grid[nr][nc].sym.id === sym.id) {
               visited[nr][nc] = true;
               queue.push([nr, nc]);
             }
@@ -71,66 +81,109 @@ function countScatters(grid) {
 }
 
 function clusterMultiplier(sym, size) {
-  const idx = Math.min(size, 13); // cap at index 13
+  const idx = Math.min(size, 13);
   return sym.mult[idx] ?? sym.mult[sym.mult.length - 1];
 }
 
-// ── SYMBOL CELL ──────────────────────────────────────────────
-function SymbolCell({ cell, row, col, isWin, isBomb }) {
+/* ── WIN TICKER at top ── */
+function WinTicker() {
+  const [items] = useState(() => {
+    const shuffled = [...WIN_NOTICES].sort(() => Math.random() - 0.5);
+    return [...shuffled, ...shuffled];
+  });
+  return (
+    <div style={{
+      width: "100%", overflow: "hidden", position: "relative", zIndex: 20,
+      background: "linear-gradient(90deg,rgba(255,105,180,.85),rgba(255,160,50,.85),rgba(255,105,180,.85))",
+      backdropFilter: "blur(4px)",
+      borderBottom: "1.5px solid rgba(255,255,255,.4)",
+      padding: "5px 0",
+    }}>
+      <div style={{
+        display: "flex", gap: 48,
+        animation: "tickerScroll 38s linear infinite",
+        whiteSpace: "nowrap",
+        width: "max-content",
+      }}>
+        {items.map((w, i) => (
+          <span key={i} style={{
+            fontSize: 12, fontWeight: 700, color: "#fff",
+            display: "inline-flex", alignItems: "center", gap: 6,
+            textShadow: "0 1px 4px rgba(0,0,0,.3)",
+          }}>
+            🎉 Congrats <strong style={{ color: "#ffe066" }}>{w.name}</strong> for winning <strong style={{ color: "#ffe066" }}>{w.amount}</strong>!
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── SYMBOL CELL ── */
+function SymCell({ cell, isWin, isBomb }) {
+  const s = cell.sym;
   return (
     <div style={{
       position: "relative",
       borderRadius: 10,
       background: isWin
-        ? `radial-gradient(circle at 50% 50%, ${cell.sym.color}55, ${cell.sym.color}18)`
-        : "rgba(255,255,255,0.06)",
-      border: isWin
-        ? `2px solid ${cell.sym.color}`
-        : "1.5px solid rgba(255,255,255,0.09)",
+        ? `radial-gradient(circle at 50% 50%, ${s.color}44, ${s.color}11)`
+        : "rgba(255,255,255,0.18)",
+      border: isWin ? `2px solid ${s.color}` : "1.5px solid rgba(255,255,255,0.35)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: "clamp(18px,3.5vw,30px)",
       aspectRatio: "1",
-      boxShadow: isWin ? `0 0 18px ${cell.sym.color}88` : "none",
+      boxShadow: isWin ? `0 0 18px ${s.color}88` : "0 2px 6px rgba(0,0,0,.08)",
       transform: isBomb ? "scale(0)" : isWin ? "scale(1.07)" : "scale(1)",
-      transition: isBomb
-        ? "transform 0.3s cubic-bezier(.4,2,.6,1), opacity 0.3s"
-        : "all 0.22s cubic-bezier(.34,1.56,.64,1)",
+      transition: "all 0.22s cubic-bezier(.34,1.56,.64,1)",
       opacity: isBomb ? 0 : 1,
       overflow: "hidden",
       animationName: cell.state === "drop" ? "dropIn" : "none",
       animationDuration: "0.35s",
       animationTimingFunction: "cubic-bezier(.34,1.3,.64,1)",
     }}>
-      <span style={{ userSelect:"none", filter: isWin ? "drop-shadow(0 0 6px white)" : "none" }}>
-        {cell.sym.emoji}
-      </span>
-      {/* Win glow pulse */}
+      {s.img ? (
+        <img
+          src={s.img}
+          alt={s.label}
+          style={{
+            width: "88%", height: "88%",
+            objectFit: "contain",
+            /* remove white bg via mix-blend-mode */
+            mixBlendMode: "multiply",
+            filter: isWin ? "drop-shadow(0 0 6px white) brightness(1.1)" : "none",
+            pointerEvents: "none",
+          }}
+        />
+      ) : (
+        <span style={{
+          fontSize: "clamp(18px,3.2vw,28px)", userSelect: "none",
+          filter: isWin ? "drop-shadow(0 0 6px white)" : "none",
+        }}>
+          {s.emoji}
+        </span>
+      )}
       {isWin && (
         <div style={{
-          position:"absolute", inset:0, borderRadius:10,
-          background:`radial-gradient(circle,${cell.sym.color}30,transparent)`,
-          animation:"pulse 0.45s ease-in-out infinite alternate",
-        }}/>
+          position: "absolute", inset: 0, borderRadius: 10,
+          background: `radial-gradient(circle,${s.color}28,transparent)`,
+          animation: "pulse 0.45s ease-in-out infinite alternate",
+        }} />
       )}
-      {/* Bomb explosion */}
       {isBomb && (
         <div style={{
-          position:"absolute", inset:-10,
-          background:`radial-gradient(circle,${cell.sym.color}cc,transparent 70%)`,
-          borderRadius:"50%",
-          animation:"explode 0.35s ease-out forwards",
-        }}/>
+          position: "absolute", inset: -10,
+          background: `radial-gradient(circle,${s.color}cc,transparent 70%)`,
+          borderRadius: "50%",
+          animation: "explode 0.35s ease-out forwards",
+        }} />
       )}
     </div>
   );
 }
 
-// ── BET BUTTONS ───────────────────────────────────────────────
-const BET_OPTS = [0.20, 0.40, 0.60, 1.00, 2.00, 4.00, 6.00, 10.00, 20.00, 40.00, 100.00];
-
 export default function SweetBonanza2500() {
   const [grid, setGrid] = useState(makeGrid());
-  const [balance, setBalance] = useState(10000);
+  const [balance, setBalance] = useState(20000);
   const [bet, setBet] = useState(2.00);
   const [spinning, setSpinning] = useState(false);
   const [winCells, setWinCells] = useState(new Set());
@@ -142,29 +195,26 @@ export default function SweetBonanza2500() {
   const [inFreeSpins, setInFreeSpins] = useState(false);
   const [multiplier, setMultiplier] = useState(1);
   const [showWin, setShowWin] = useState(false);
-  const [winLevel, setWinLevel] = useState(""); // "big","mega","epic"
+  const [winLevel, setWinLevel] = useState("");
   const [turbo, setTurbo] = useState(false);
   const [autoSpin, setAutoSpin] = useState(false);
+  const [dcOn, setDcOn] = useState(false);
   const autoRef = useRef(false);
   const spinningRef = useRef(false);
 
-  const delay = (ms) => new Promise(r => setTimeout(r, turbo ? ms * 0.35 : ms));
+  const delay = (ms) => new Promise(r => setTimeout(r, turbo ? ms * 0.3 : ms));
 
-  // Animate grid spinning (random shuffle frames)
   const animateSpin = async () => {
-    const frames = turbo ? 4 : 10;
+    const frames = turbo ? 3 : 9;
     for (let f = 0; f < frames; f++) {
       setGrid(makeGrid());
-      await delay(65);
+      await delay(62);
     }
   };
 
   const doSpin = useCallback(async () => {
     if (spinningRef.current) return;
-    if (!inFreeSpins && balance < bet) {
-      setMessage("💸 Insufficient balance!");
-      return;
-    }
+    if (!inFreeSpins && balance < bet) { setMessage("💸 Insufficient balance!"); return; }
     spinningRef.current = true;
     setSpinning(true);
     setShowWin(false);
@@ -176,15 +226,13 @@ export default function SweetBonanza2500() {
     if (inFreeSpins) {
       setFreeSpins(f => f - 1);
     } else {
-      setBalance(b => b - bet);
+      setBalance(b => Math.round((b - bet) * 100) / 100);
     }
 
     await animateSpin();
-
     const finalGrid = makeGrid();
     setGrid(finalGrid);
-    await delay(200);
-
+    await delay(180);
     await processTumble(finalGrid, inFreeSpins ? multiplier : 1, 0);
 
     spinningRef.current = false;
@@ -193,10 +241,9 @@ export default function SweetBonanza2500() {
 
   useEffect(() => { autoRef.current = autoSpin; }, [autoSpin]);
 
-  // Auto spin loop
   useEffect(() => {
     if (!autoSpin || spinningRef.current) return;
-    const t = setTimeout(() => { if (autoRef.current) doSpin(); }, 600);
+    const t = setTimeout(() => { if (autoRef.current) doSpin(); }, 700);
     return () => clearTimeout(t);
   }, [autoSpin, spinning]);
 
@@ -204,49 +251,37 @@ export default function SweetBonanza2500() {
     const clusters = findClusters(g);
     const scatters = countScatters(g);
 
-    // Check free spins trigger
     if (scatters >= 4 && !inFreeSpins) {
       const fs = scatters >= 6 ? 25 : scatters >= 5 ? 18 : 12;
-      setFreeSpins(fs);
-      setInFreeSpins(true);
-      setMultiplier(2);
+      setFreeSpins(fs); setInFreeSpins(true); setMultiplier(2);
       setMessage(`🎰 ${fs} FREE SPINS TRIGGERED!`);
-      await delay(1200);
+      await delay(1400);
     }
 
     if (clusters.length === 0) {
       if (accumulated === 0) setMessage("Try again! 🍭");
       else {
         const level = accumulated >= bet * 50 ? "epic" : accumulated >= bet * 20 ? "mega" : accumulated >= bet * 5 ? "big" : "";
-        if (level) { setWinLevel(level); setShowWin(true); await delay(1800); setShowWin(false); }
+        if (level) { setWinLevel(level); setShowWin(true); await delay(2200); setShowWin(false); }
       }
       if (inFreeSpins && freeSpins <= 0) {
         await delay(600);
-        setInFreeSpins(false);
-        setMultiplier(1);
-        setMessage("Free Spins Ended!");
+        setInFreeSpins(false); setMultiplier(1); setMessage("Free Spins Ended!");
       }
       return;
     }
 
-    // Mark winning cells
     const winning = new Set();
-    clusters.forEach(cl => cl.cells.forEach(([r,c]) => winning.add(`${r},${c}`)));
+    clusters.forEach(cl => cl.cells.forEach(([r, c]) => winning.add(`${r},${c}`)));
     setWinCells(winning);
 
-    // Calculate win
     let win = 0;
-    clusters.forEach(cl => {
-      const m = clusterMultiplier(cl.sym, cl.size);
-      win += m * bet * mult;
-    });
+    clusters.forEach(cl => { win += clusterMultiplier(cl.sym, cl.size) * bet * mult; });
     win = Math.round(win * 100) / 100;
 
-    await delay(500);
-
-    // Explode winning cells
+    await delay(480);
     setBombCells(new Set(winning));
-    await delay(350);
+    await delay(320);
 
     setBalance(b => Math.round((b + win) * 100) / 100);
     const newAccum = Math.round((accumulated + win) * 100) / 100;
@@ -254,350 +289,346 @@ export default function SweetBonanza2500() {
     setTotalWin(tw => Math.round((tw + win) * 100) / 100);
     setMessage(win >= bet * 20 ? `🎊 MEGA WIN! +₱${win.toFixed(2)}` : win >= bet * 5 ? `🔥 BIG WIN! +₱${win.toFixed(2)}` : `+₱${win.toFixed(2)}`);
 
-    // Tumble: remove winners, drop new symbols
-    await delay(300);
+    await delay(280);
     const newGrid = g.map((row, ri) => row.map((cell, ci) => {
-      if (winning.has(`${ri},${ci}`)) {
-        return { sym: weightedRandom(), state: "drop" };
-      }
+      if (winning.has(`${ri},${ci}`)) return { sym: weightedRandom(), state: "drop" };
       return { ...cell, state: "idle" };
     }));
     setGrid(newGrid);
     setWinCells(new Set());
     setBombCells(new Set());
+    await delay(380);
 
-    await delay(400);
-
-    // Increase multiplier each tumble in free spins
     const nextMult = inFreeSpins ? mult + 1 : mult;
+    if (inFreeSpins) setMultiplier(nextMult);
     await processTumble(newGrid, nextMult, newAccum);
   };
 
-  // Keyboard
   useEffect(() => {
-    const h = (e) => {
-      if (e.code === "Space" && !spinningRef.current) { e.preventDefault(); doSpin(); }
-    };
+    const h = (e) => { if (e.code === "Space" && !spinningRef.current) { e.preventDefault(); doSpin(); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [doSpin]);
 
-  const bgClouds = [
-    { top:"5%",  left:"2%",  size:120, op:0.5 },
-    { top:"10%", left:"70%", size:180, op:0.4 },
-    { top:"2%",  left:"40%", size:100, op:0.35 },
-    { top:"75%", left:"5%",  size:150, op:0.3 },
-    { top:"80%", left:"65%", size:130, op:0.35 },
-  ];
+  const buyFeature = () => {
+    if (balance < bet * 100) { setMessage("💸 Insufficient balance!"); return; }
+    setBalance(b => Math.round((b - bet * 100) * 100) / 100);
+    setFreeSpins(12); setInFreeSpins(true); setMultiplier(2);
+    setMessage("🎰 12 FREE SPINS ACTIVATED!");
+  };
 
   return (
     <div style={{
-      minHeight:"100vh",
-      background:"linear-gradient(180deg,#87ceeb 0%,#b0e0ff 30%,#ffd6e7 60%,#ffe4b5 100%)",
-      display:"flex", flexDirection:"column", alignItems:"center",
-      fontFamily:"'Segoe UI',sans-serif", position:"relative",
-      overflow:"hidden",
+      minHeight: "100vh",
+      /* Animated background image */
+      backgroundImage: `url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
+      backgroundSize: "220% 220%",
+      backgroundRepeat: "no-repeat",
+      animation: "bgDrift 18s ease-in-out infinite alternate",
+      display: "flex", flexDirection: "column", alignItems: "center",
+      fontFamily: "'Segoe UI',sans-serif", position: "relative", overflow: "hidden",
     }}>
-      {/* Candy clouds BG */}
-      {bgClouds.map((cl,i)=>(
-        <div key={i} style={{
-          position:"absolute", top:cl.top, left:cl.left,
-          width:cl.size, height:cl.size*0.55,
-          background:"rgba(255,255,255,0.7)",
-          borderRadius:"50%",
-          filter:"blur(18px)",
-          opacity:cl.op,
-          pointerEvents:"none",
-        }}/>
-      ))}
-
-      {/* Candy hills bottom */}
+      {/* Subtle overlay to keep readability */}
       <div style={{
-        position:"absolute", bottom:0, left:0, right:0, height:80,
-        background:"linear-gradient(180deg,#ff9eca,#ffb3d9)",
-        borderRadius:"80% 80% 0 0 / 40px 40px 0 0",
-        pointerEvents:"none",
-      }}/>
+        position: "absolute", inset: 0,
+        background: "rgba(100,200,255,0.18)",
+        pointerEvents: "none", zIndex: 1,
+      }} />
 
-      {/* ── HEADER ── */}
-      <div style={{
-        width:"100%", maxWidth:900,
-        display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"12px 20px 0", position:"relative", zIndex:10,
-      }}>
-        {/* Title */}
-        <div style={{ textAlign:"center", flex:1 }}>
-          <div style={{
-            fontWeight:900, fontSize:"clamp(22px,5vw,38px)",
-            background:"linear-gradient(135deg,#ff6bcd,#ff9f43,#ff6bcd)",
-            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
-            textShadow:"none",
-            letterSpacing:2, lineHeight:1,
-            filter:"drop-shadow(0 2px 6px rgba(255,107,205,0.6))",
-          }}>Sweet Bonanza</div>
-          <div style={{ fontSize:11, color:"rgba(100,20,60,0.6)", letterSpacing:3, fontWeight:700 }}>2500 • PRAGMATIC PLAY</div>
-        </div>
-        {/* Balance */}
-        <div style={{
-          background:"rgba(255,255,255,0.55)",
-          backdropFilter:"blur(10px)",
-          borderRadius:12, padding:"8px 16px",
-          border:"1.5px solid rgba(255,255,255,0.8)",
-          textAlign:"right",
-        }}>
-          <div style={{ fontSize:9, color:"rgba(80,20,50,0.5)", letterSpacing:1, fontWeight:700 }}>BALANCE</div>
-          <div style={{ fontSize:18, fontWeight:900, color:"#c0392b" }}>₱{balance.toFixed(2)}</div>
-        </div>
+      {/* ── WIN TICKER ── */}
+      <div style={{ width: "100%", position: "relative", zIndex: 20 }}>
+        <WinTicker />
       </div>
 
-      {/* ── FREE SPINS BANNER ── */}
+      {/* FREE SPINS BANNER */}
       {inFreeSpins && (
         <div style={{
-          background:"linear-gradient(135deg,#f39c12,#e74c3c)",
-          color:"#fff", fontWeight:900, fontSize:13,
-          padding:"6px 20px", borderRadius:30,
-          boxShadow:"0 4px 20px rgba(231,76,60,0.5)",
-          marginTop:6, letterSpacing:1, zIndex:10,
-          animation:"pulse 0.6s ease-in-out infinite alternate",
+          background: "linear-gradient(135deg,#f39c12,#e74c3c)", color: "#fff", fontWeight: 900,
+          fontSize: 13, padding: "6px 20px", borderRadius: 30,
+          boxShadow: "0 4px 20px rgba(231,76,60,.5)",
+          marginTop: 6, letterSpacing: 1, zIndex: 10,
+          animation: "pulse .6s ease-in-out infinite alternate",
+          position: "relative",
         }}>
           ⭐ FREE SPINS: {freeSpins} remaining • Multiplier ×{multiplier}
         </div>
       )}
 
-      {/* ── MAIN GRID AREA ── */}
+      {/* ── HEADER ── */}
       <div style={{
-        position:"relative", zIndex:10, marginTop:10,
-        width:"100%", maxWidth:700, padding:"0 10px",
+        width: "100%", maxWidth: 980, display: "flex", alignItems: "center",
+        justifyContent: "space-between", padding: "10px 16px 0",
+        position: "relative", zIndex: 10,
       }}>
-        {/* Grid frame */}
-        <div style={{
-          background:"linear-gradient(180deg,rgba(255,255,255,0.35),rgba(255,200,230,0.25))",
-          backdropFilter:"blur(8px)",
-          borderRadius:20,
-          border:"2.5px solid rgba(255,255,255,0.7)",
-          boxShadow:"0 8px 40px rgba(255,105,180,0.25), inset 0 1px 0 rgba(255,255,255,0.6)",
-          padding:"12px",
-          position:"relative",
-        }}>
-          {/* Corner candies decoration */}
-          {["top:6px;left:8px","top:6px;right:8px","bottom:6px;left:8px","bottom:6px;right:8px"].map((s,i)=>(
-            <span key={i} style={{ position:"absolute", fontSize:16, ...Object.fromEntries(s.split(";").map(p=>p.split(":"))) }}>🍬</span>
-          ))}
-
-          {/* Message banner */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ background: "rgba(255,255,255,.75)", backdropFilter: "blur(8px)", borderRadius: 10,
+            padding: "6px 14px", border: "1.5px solid rgba(255,255,255,.9)" }}>
+            <div style={{ fontSize: 8, color: "rgba(80,20,50,.6)", fontWeight: 700, letterSpacing: 1 }}>CREDIT</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#c0392b" }}>₱{balance.toFixed(2)}</div>
+          </div>
+          <div style={{ background: "rgba(255,255,255,.75)", backdropFilter: "blur(8px)", borderRadius: 10,
+            padding: "6px 14px", border: "1.5px solid rgba(255,255,255,.9)" }}>
+            <div style={{ fontSize: 8, color: "rgba(80,20,50,.6)", fontWeight: 700, letterSpacing: 1 }}>TOTAL WIN</div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#27ae60" }}>₱{totalWin.toFixed(2)}</div>
+          </div>
+        </div>
+        <div style={{ textAlign: "center", flex: 1 }}>
           <div style={{
-            textAlign:"center", marginBottom:8,
-            minHeight:28, display:"flex", alignItems:"center", justifyContent:"center",
+            fontWeight: 900, fontSize: "clamp(20px,4vw,36px)",
+            background: "linear-gradient(135deg,#ff6bcd,#ff9f43,#ff6bcd)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            letterSpacing: 2, filter: "drop-shadow(0 2px 8px rgba(255,107,205,.7))",
+          }}>Sweet Bonanza</div>
+          <div style={{ fontSize: 9, color: "rgba(80,10,50,.7)", letterSpacing: 3, fontWeight: 700 }}>2500 • PRAGMATIC PLAY</div>
+        </div>
+        <div style={{ background: "rgba(255,255,255,.75)", backdropFilter: "blur(8px)", borderRadius: 10,
+          padding: "6px 14px", border: "1.5px solid rgba(255,255,255,.9)", textAlign: "right" }}>
+          <div style={{ fontSize: 8, color: "rgba(80,20,50,.6)", fontWeight: 700, letterSpacing: 1 }}>BET</div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: "#c0392b" }}>₱{bet.toFixed(2)}</div>
+        </div>
+      </div>
+
+      {/* ── MAIN LAYOUT ── */}
+      <div style={{
+        width: "100%", maxWidth: 980, display: "flex", gap: 12,
+        padding: "10px 12px", position: "relative", zIndex: 10, alignItems: "flex-start",
+      }}>
+        {/* LEFT PANEL */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 148, maxWidth: 160 }}>
+          {/* Buy Feature */}
+          <div style={{
+            background: "linear-gradient(135deg,#f39c12,#e67e22)", borderRadius: 14,
+            padding: "12px 10px", textAlign: "center", border: "2px solid rgba(255,255,255,.5)",
+            boxShadow: "0 4px 16px rgba(230,126,34,.5)",
           }}>
-            {message && (
-              <div style={{
-                background: message.includes("WIN") ? "linear-gradient(135deg,#f39c12,#e74c3c)" : "rgba(255,255,255,0.5)",
-                color: message.includes("WIN") ? "#fff" : "#c0392b",
-                fontWeight:900, fontSize:13, letterSpacing:0.5,
-                padding:"5px 18px", borderRadius:20,
-                boxShadow: message.includes("WIN") ? "0 0 20px rgba(231,76,60,0.5)" : "none",
-                animation: message.includes("WIN") ? "popIn 0.3s cubic-bezier(.34,1.56,.64,1)" : "none",
-              }}>{message}</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,.85)", fontWeight: 700, letterSpacing: 1 }}>BUY FEATURE</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>₱{(bet * 100).toFixed(2)}</div>
+            <button onClick={buyFeature} style={{
+              marginTop: 6, background: "rgba(255,255,255,.3)",
+              border: "1.5px solid rgba(255,255,255,.7)", borderRadius: 20,
+              padding: "4px 0", color: "#fff", fontWeight: 700, fontSize: 10,
+              cursor: "pointer", width: "100%",
+            }}>BUY NOW</button>
+          </div>
+
+          {/* Bet + Double Chance */}
+          <div style={{
+            background: "linear-gradient(135deg,#27ae60,#1e8449)", borderRadius: 14,
+            padding: "12px 10px", textAlign: "center", border: "2px solid rgba(255,255,255,.5)",
+            boxShadow: "0 4px 16px rgba(39,174,96,.5)",
+          }}>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,.85)", fontWeight: 700, letterSpacing: 1 }}>BET</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>₱{bet.toFixed(2)}</div>
+            <div style={{ marginTop: 4, fontSize: 9, color: "rgba(255,255,255,.75)", fontWeight: 700 }}>DOUBLE CHANCE</div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,.75)", fontWeight: 700 }}>TO WIN FEATURE</div>
+            <button onClick={() => setDcOn(d => !d)} style={{
+              marginTop: 6,
+              background: dcOn ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.2)",
+              border: "1.5px solid rgba(255,255,255,.6)", borderRadius: 12,
+              padding: "3px 12px", fontSize: 10, color: "#fff", fontWeight: 700, cursor: "pointer",
+            }}>
+              {dcOn ? "✅ ON" : "⬛ OFF"}
+            </button>
+          </div>
+
+          {/* Paytable */}
+          <div style={{
+            background: "rgba(255,255,255,.72)", backdropFilter: "blur(8px)", borderRadius: 14,
+            padding: "8px", border: "1.5px solid rgba(255,255,255,.9)",
+          }}>
+            <div style={{ fontSize: 8, color: "rgba(100,20,50,.6)", fontWeight: 700, letterSpacing: 1,
+              textAlign: "center", marginBottom: 6 }}>PAYTABLE</div>
+            {SYMBOLS.map(s => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 0" }}>
+                <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {s.img
+                    ? <img src={s.img} alt={s.label} style={{ width: 22, height: 22, objectFit: "contain", mixBlendMode: "multiply" }} />
+                    : <span style={{ fontSize: 15 }}>{s.emoji}</span>}
+                </div>
+                <span style={{ fontSize: 8, color: "rgba(120,20,50,.7)", fontWeight: 700 }}>
+                  {s.scatter ? "SCATTER" : `8+: ${s.mult[8]}×`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* GRID AREA */}
+        <div style={{ flex: 1, position: "relative" }}>
+          <div style={{
+            background: "rgba(173,225,255,0.55)",
+            backdropFilter: "blur(10px)",
+            borderRadius: 20,
+            border: "2.5px solid rgba(255,255,255,.75)",
+            boxShadow: "0 8px 40px rgba(100,180,255,.3), inset 0 1px 0 rgba(255,255,255,.7)",
+            padding: "12px", position: "relative",
+          }}>
+            {/* corner candies */}
+            {["top:6px;left:8px","top:6px;right:8px","bottom:6px;left:8px","bottom:6px;right:8px"].map((s,i)=>(
+              <span key={i} style={{ position:"absolute", fontSize:16, ...Object.fromEntries(s.split(";").map(p=>p.split(":"))) }}>🍬</span>
+            ))}
+
+            {/* Message */}
+            <div style={{ textAlign:"center", marginBottom:8, minHeight:28,
+              display:"flex", alignItems:"center", justifyContent:"center" }}>
+              {message && (
+                <div style={{
+                  background: message.includes("WIN") || message.includes("FREE") || message.includes("SPINS")
+                    ? "linear-gradient(135deg,#f39c12,#e74c3c)" : "rgba(255,255,255,.7)",
+                  color: message.includes("WIN") || message.includes("FREE") || message.includes("SPINS")
+                    ? "#fff" : "#c0392b",
+                  fontWeight: 900, fontSize: 13, letterSpacing: .5,
+                  padding: "5px 18px", borderRadius: 20,
+                  boxShadow: message.includes("WIN") ? "0 0 20px rgba(231,76,60,.5)" : "none",
+                  animation: message.includes("WIN") ? "popIn .3s cubic-bezier(.34,1.56,.64,1)" : "none",
+                }}>{message}</div>
+              )}
+            </div>
+
+            {/* Grid */}
+            <div style={{ display:"grid", gridTemplateColumns:`repeat(${COLS},1fr)`, gap:6 }}>
+              {grid.map((row, ri) => row.map((cell, ci) => (
+                <SymCell
+                  key={`${ri}-${ci}-${cell.sym.uid}`}
+                  cell={cell}
+                  isWin={winCells.has(`${ri},${ci}`)}
+                  isBomb={bombCells.has(`${ri},${ci}`)}
+                />
+              )))}
+            </div>
+
+            {roundWin > 0 && (
+              <div style={{ textAlign:"center", marginTop:8, fontSize:13, fontWeight:900, color:"#c0392b" }}>
+                Round Win: ₱{roundWin.toFixed(2)}
+              </div>
             )}
           </div>
 
-          {/* Grid */}
-          <div style={{
-            display:"grid",
-            gridTemplateColumns:`repeat(${COLS}, 1fr)`,
-            gap:6,
-          }}>
-            {grid.map((row, ri) => row.map((cell, ci) => {
-              const key = `${ri},${ci}`;
-              return (
-                <SymbolCell
-                  key={`${ri}-${ci}-${cell.sym.uid}`}
-                  cell={cell}
-                  row={ri} col={ci}
-                  isWin={winCells.has(key)}
-                  isBomb={bombCells.has(key)}
-                />
-              );
-            }))}
-          </div>
-
-          {/* Round win display */}
-          {roundWin > 0 && (
+          {/* Big Win Overlay */}
+          {showWin && (
             <div style={{
-              textAlign:"center", marginTop:8,
-              fontSize:13, fontWeight:900,
-              color:"#c0392b",
-            }}>Round Win: ₱{roundWin.toFixed(2)}</div>
+              position:"absolute", inset:0, display:"flex", alignItems:"center",
+              justifyContent:"center", background:"rgba(0,0,0,.45)", borderRadius:20,
+              zIndex:20, backdropFilter:"blur(4px)",
+            }}>
+              <div style={{ textAlign:"center", animation:"popIn .4s cubic-bezier(.34,1.56,.64,1)" }}>
+                <div style={{
+                  fontWeight:900, fontSize:"clamp(26px,7vw,52px)",
+                  background:"linear-gradient(135deg,#ffd700,#ff6b35,#ffd700)",
+                  WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+                  filter:"drop-shadow(0 0 20px rgba(255,215,0,.8))",
+                  letterSpacing:3, textTransform:"uppercase",
+                }}>
+                  {winLevel === "epic" ? "⚡ EPIC WIN! ⚡" : winLevel === "mega" ? "🌟 MEGA WIN! 🌟" : "🎊 BIG WIN! 🎊"}
+                </div>
+                <div style={{ fontSize:"clamp(18px,4vw,34px)", fontWeight:900, color:"#fff", marginTop:6 }}>
+                  ₱{roundWin.toFixed(2)}
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* ── BIG WIN OVERLAY ── */}
-        {showWin && (
-          <div style={{
-            position:"absolute", inset:0,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            background:"rgba(0,0,0,0.45)", borderRadius:20, zIndex:20,
-            backdropFilter:"blur(4px)",
-          }}>
-            <div style={{
-              textAlign:"center",
-              animation:"popIn 0.4s cubic-bezier(.34,1.56,.64,1)",
-            }}>
-              <div style={{
-                fontWeight:900, fontSize:"clamp(28px,8vw,56px)",
-                background:"linear-gradient(135deg,#ffd700,#ff6b35,#ffd700)",
-                WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
-                filter:"drop-shadow(0 0 20px rgba(255,215,0,0.8))",
-                letterSpacing:3, textTransform:"uppercase",
-              }}>
-                {winLevel === "epic" ? "⚡ EPIC WIN! ⚡" : winLevel === "mega" ? "🌟 MEGA WIN! 🌟" : "🎊 BIG WIN! 🎊"}
+        {/* RIGHT PANEL */}
+        <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:110, maxWidth:128 }}>
+          {inFreeSpins && (
+            <>
+              <div style={{ background:"linear-gradient(135deg,#8e44ad,#6c3483)", borderRadius:14,
+                padding:10, textAlign:"center", border:"2px solid rgba(255,255,255,.4)" }}>
+                <div style={{ fontSize:9, color:"rgba(255,255,255,.7)", fontWeight:700, letterSpacing:1 }}>MULTIPLIER</div>
+                <div style={{ fontSize:28, fontWeight:900, color:"#ffd700" }}>×{multiplier}</div>
               </div>
-              <div style={{ fontSize:"clamp(20px,5vw,36px)", fontWeight:900, color:"#fff", marginTop:6 }}>
-                ₱{roundWin.toFixed(2)}
+              <div style={{ background:"linear-gradient(135deg,#e74c3c,#c0392b)", borderRadius:14,
+                padding:10, textAlign:"center", border:"2px solid rgba(255,255,255,.4)" }}>
+                <div style={{ fontSize:9, color:"rgba(255,255,255,.7)", fontWeight:700, letterSpacing:1 }}>FREE SPINS</div>
+                <div style={{ fontSize:28, fontWeight:900, color:"#fff" }}>{freeSpins}</div>
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* ── CONTROLS ── */}
-      <div style={{
-        width:"100%", maxWidth:700, padding:"10px 10px 20px",
-        position:"relative", zIndex:10,
-      }}>
-        {/* Panel */}
+      {/* ── BOTTOM CONTROLS ── */}
+      <div style={{ width:"100%", maxWidth:980, padding:"0 12px 20px", position:"relative", zIndex:10 }}>
         <div style={{
-          background:"linear-gradient(180deg,rgba(255,255,255,0.5),rgba(255,200,230,0.4))",
-          backdropFilter:"blur(12px)",
-          borderRadius:18, border:"2px solid rgba(255,255,255,0.7)",
-          boxShadow:"0 4px 20px rgba(255,105,180,0.2)",
-          padding:"14px 16px",
-          display:"flex", flexDirection:"column", gap:12,
+          background:"rgba(255,255,255,.72)", backdropFilter:"blur(12px)",
+          borderRadius:18, border:"2px solid rgba(255,255,255,.85)",
+          boxShadow:"0 4px 20px rgba(100,180,255,.2)",
+          padding:"12px 16px", display:"flex", flexDirection:"column", gap:10,
         }}>
-          {/* BET row */}
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <div style={{
-              background:"rgba(255,100,150,0.15)",
-              border:"1.5px solid rgba(255,100,150,0.3)",
-              borderRadius:10, padding:"6px 12px",
-              minWidth:90,
-            }}>
-              <div style={{ fontSize:8, color:"rgba(150,30,60,0.6)", fontWeight:700, letterSpacing:1 }}>BET</div>
-              <div style={{ fontSize:16, fontWeight:900, color:"#c0392b" }}>₱{bet.toFixed(2)}</div>
-            </div>
-            <div style={{ display:"flex", gap:4, flex:1, flexWrap:"wrap" }}>
+          {/* Bet selector */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+            <span style={{ fontSize:9, color:"rgba(150,30,60,.7)", fontWeight:700, letterSpacing:1 }}>BET:</span>
+            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
               {BET_OPTS.map(v => (
                 <button key={v} onClick={() => !spinning && setBet(v)} style={{
-                  background: bet===v
-                    ? "linear-gradient(135deg,#e74c3c,#c0392b)"
-                    : "rgba(255,255,255,0.5)",
-                  border: bet===v ? "1.5px solid #c0392b" : "1.5px solid rgba(200,100,130,0.3)",
-                  borderRadius:8, padding:"4px 8px",
-                  color: bet===v ? "#fff" : "#c0392b",
+                  background: bet === v ? "linear-gradient(135deg,#e74c3c,#c0392b)" : "rgba(255,255,255,.6)",
+                  border: bet === v ? "1.5px solid #c0392b" : "1.5px solid rgba(200,100,130,.35)",
+                  borderRadius:8, padding:"5px 9px",
+                  color: bet === v ? "#fff" : "#c0392b",
                   fontWeight:700, fontSize:10, cursor:"pointer",
-                  boxShadow: bet===v ? "0 2px 10px rgba(192,57,43,0.4)" : "none",
-                  transition:"all 0.15s",
+                  boxShadow: bet === v ? "0 2px 10px rgba(192,57,43,.4)" : "none",
+                  transition:"all .15s",
                 }}>₱{v.toFixed(2)}</button>
               ))}
             </div>
           </div>
 
-          {/* Spin + toggles row */}
+          {/* Spin row */}
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            {/* Turbo toggle */}
             <button onClick={() => setTurbo(t => !t)} style={{
-              background: turbo ? "linear-gradient(135deg,#f39c12,#e67e22)" : "rgba(255,255,255,0.5)",
-              border: turbo ? "1.5px solid #e67e22" : "1.5px solid rgba(200,100,130,0.3)",
-              borderRadius:10, padding:"8px 12px",
+              background: turbo ? "linear-gradient(135deg,#f39c12,#e67e22)" : "rgba(255,255,255,.6)",
+              border: turbo ? "1.5px solid #e67e22" : "1.5px solid rgba(200,100,130,.3)",
+              borderRadius:10, padding:"10px 14px",
               color: turbo ? "#fff" : "#c0392b",
-              fontWeight:700, fontSize:11, cursor:"pointer",
-              whiteSpace:"nowrap",
+              fontWeight:700, fontSize:11, cursor:"pointer", whiteSpace:"nowrap",
             }}>⚡ {turbo ? "TURBO ON" : "TURBO"}</button>
 
-            {/* SPIN button */}
-            <button
-              onClick={doSpin}
-              disabled={spinning}
-              style={{
-                flex:1,
-                background: spinning
-                  ? "rgba(200,100,130,0.3)"
-                  : inFreeSpins
-                    ? "linear-gradient(135deg,#f39c12,#e74c3c)"
-                    : "linear-gradient(135deg,#e74c3c,#c0392b,#e74c3c)",
-                backgroundSize: "200% 100%",
-                border:"none", borderRadius:30,
-                padding:"14px 0",
-                color: spinning ? "rgba(150,50,70,0.5)" : "#fff",
-                fontWeight:900, fontSize:17,
-                cursor: spinning ? "not-allowed" : "pointer",
-                letterSpacing:2,
-                boxShadow: spinning ? "none" : "0 6px 24px rgba(231,76,60,0.5)",
-                transition:"all 0.2s",
-                position:"relative", overflow:"hidden",
-              }}
-            >
-              {spinning ? (
-                <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-                  <span style={{ display:"inline-block", animation:"spin 0.5s linear infinite" }}>🔄</span>
-                  SPINNING...
-                </span>
-              ) : inFreeSpins ? `⭐ FREE SPIN!` : "SPIN ▶"}
-            </button>
-
-            {/* Auto toggle */}
-            <button onClick={() => setAutoSpin(a => !a)} style={{
-              background: autoSpin ? "linear-gradient(135deg,#27ae60,#1e8449)" : "rgba(255,255,255,0.5)",
-              border: autoSpin ? "1.5px solid #27ae60" : "1.5px solid rgba(200,100,130,0.3)",
-              borderRadius:10, padding:"8px 12px",
-              color: autoSpin ? "#fff" : "#c0392b",
-              fontWeight:700, fontSize:11, cursor:"pointer",
-              whiteSpace:"nowrap",
-            }}>🔁 {autoSpin ? "AUTO ON" : "AUTO"}</button>
-          </div>
-
-          {/* Buy Feature + info row */}
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            <button style={{
-              background:"linear-gradient(135deg,#27ae60,#1e8449)",
-              border:"none", borderRadius:10, padding:"8px 14px",
-              color:"#fff", fontWeight:700, fontSize:11, cursor:"pointer",
-              boxShadow:"0 3px 12px rgba(39,174,96,0.4)",
-              whiteSpace:"nowrap",
+            <button onClick={doSpin} disabled={spinning} style={{
+              flex:1,
+              background: spinning ? "rgba(200,100,130,.3)"
+                : inFreeSpins ? "linear-gradient(135deg,#f39c12,#e74c3c)"
+                : "linear-gradient(135deg,#e74c3c,#c0392b,#e74c3c)",
+              border:"none", borderRadius:30, padding:"16px 0",
+              color: spinning ? "rgba(150,50,70,.5)" : "#fff",
+              fontWeight:900, fontSize:18, cursor: spinning ? "not-allowed" : "pointer",
+              letterSpacing:2, boxShadow: spinning ? "none" : "0 6px 24px rgba(231,76,60,.5)",
+              transition:"all .2s",
             }}>
-              🎰 BUY FEATURE<br/>
-              <span style={{ fontSize:13, fontWeight:900 }}>₱{(bet * 100).toFixed(2)}</span>
-            </button>
-            <div style={{ flex:1, display:"flex", gap:4, overflowX:"auto", scrollbarWidth:"none" }}>
-              {SYMBOLS.map(s => (
-                <div key={s.id} style={{
-                  display:"flex", flexDirection:"column", alignItems:"center",
-                  gap:1, flexShrink:0,
-                  background:"rgba(255,255,255,0.4)",
-                  borderRadius:8, padding:"4px 8px",
-                  border:"1.5px solid rgba(200,100,130,0.2)",
-                }}>
-                  <span style={{ fontSize:16 }}>{s.emoji}</span>
-                  <span style={{ fontSize:7, color:"rgba(150,30,60,0.6)", fontWeight:700 }}>
-                    {s.scatter ? "SCATTER" : `8+:${s.mult[8]}×`}
+              {spinning
+                ? <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                    <span style={{ display:"inline-block", animation:"spin .5s linear infinite" }}>🔄</span>
+                    SPINNING...
                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
+                : inFreeSpins ? "⭐ FREE SPIN!" : "SPIN ▶"}
+            </button>
 
-          <div style={{ textAlign:"center", fontSize:9, color:"rgba(150,30,60,0.45)", letterSpacing:0.5 }}>
-            SPACE to spin • 8+ cluster = WIN • 4+ 🍭 = Free Spins • Tumble mechanic active
+            <button onClick={() => setAutoSpin(a => !a)} style={{
+              background: autoSpin ? "linear-gradient(135deg,#27ae60,#1e8449)" : "rgba(255,255,255,.6)",
+              border: autoSpin ? "1.5px solid #27ae60" : "1.5px solid rgba(200,100,130,.3)",
+              borderRadius:10, padding:"10px 14px",
+              color: autoSpin ? "#fff" : "#c0392b",
+              fontWeight:700, fontSize:11, cursor:"pointer", whiteSpace:"nowrap",
+            }}>🔁 {autoSpin ? "AUTO ON" : "AUTO"}</button>
+
+            <button onClick={doSpin} style={{
+              background:"linear-gradient(135deg,#888,#555)", border:"none",
+              borderRadius:"50%", width:44, height:44,
+              color:"#fff", fontSize:18, cursor:"pointer",
+              boxShadow:"0 3px 10px rgba(0,0,0,.3)",
+            }}>↻</button>
           </div>
         </div>
       </div>
 
       <style>{`
-        @keyframes spin    { to { transform: rotate(360deg); } }
-        @keyframes pulse   { from { opacity:0.6; } to { opacity:1; } }
-        @keyframes explode { from { transform:scale(0.5); opacity:1; } to { transform:scale(2.5); opacity:0; } }
-        @keyframes dropIn  { from { transform:translateY(-30px) scale(0.7); opacity:0; } to { transform:translateY(0) scale(1); opacity:1; } }
-        @keyframes popIn   { from { transform:scale(0.4); opacity:0; } to { transform:scale(1); opacity:1; } }
+        @keyframes spin         { to { transform: rotate(360deg); } }
+        @keyframes pulse        { from { opacity:.6; } to { opacity:1; } }
+        @keyframes explode      { from { transform:scale(.5); opacity:1; } to { transform:scale(2.5); opacity:0; } }
+        @keyframes dropIn       { from { transform:translateY(-30px) scale(.7); opacity:0; } to { transform:translateY(0) scale(1); opacity:1; } }
+        @keyframes popIn        { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
+        @keyframes bgDrift      { 0% { background-position:0% 30%; } 50% { background-position:60% 60%; } 100% { background-position:100% 20%; } }
+        @keyframes tickerScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
       `}</style>
     </div>
   );
