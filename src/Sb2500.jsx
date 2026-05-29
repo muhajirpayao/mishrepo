@@ -305,16 +305,23 @@ export default function SweetBonanza2500() {
   const msgIsHighlight = message.includes("WIN") || message.includes("FREE") || message.includes("SPINS");
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundImage: `url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
-      backgroundSize: "300% 100%",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "0% 50%",
-      animation: "bgWave 20s ease-in-out infinite alternate",
-      display: "flex", flexDirection: "column", alignItems: "center",
-      fontFamily: "'Segoe UI',sans-serif", position: "relative", overflow: "hidden",
-    }}>
+<div style={{
+  width: "100vw",
+  height: "100vh",
+  overflow: "hidden",
+
+  backgroundImage: `url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+
+  fontFamily: "'Segoe UI',sans-serif",
+  position: "relative",
+}}>
       {/* overlay */}
       <div style={{ position:"absolute", inset:0, background:"rgba(80,180,255,0.12)", pointerEvents:"none", zIndex:1 }} />
 
