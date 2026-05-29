@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-
+import SweetBonanza2500 from "./Sb2500";
 const G = {
   sideBg:    "#0a1f14",
   mainBg:    "#0c1e14",
@@ -878,7 +878,8 @@ export default function CasinoPlus() {
       )}
 
       {/* Sweet Bonanza Modal */}
-      {playingGame && <SweetBonanzaGame onClose={()=>setPlayingGame(null)} game={playingGame} />}
+     
+        {playingGame?.id === "sweetbonanza" && <SweetBonanza2500 />}
 
       {/* Login / Register Modal */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} />}
