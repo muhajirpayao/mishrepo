@@ -34,10 +34,45 @@ function weightedRandom() {
   return { ...SYMBOLS[7], uid: Math.random() };
 }
 
-function makeGrid() {
-  return Array.from({ length: ROWS }, () =>
-    Array.from({ length: COLS }, () => ({ sym: weightedRandom(), state: "idle" }))
-  );
+function makeGrid(forceWinChance = 0.8) {
+
+  // create random grid
+  const createRandomGrid = () =>
+    Array.from({ length: ROWS }, () =>
+      Array.from({ length: COLS }, () => ({
+        sym: weightedRandom(),
+        state: "idle"
+      }))
+    );
+
+  // 80% chance to FORCE a winning board
+  if (Math.random() < forceWinChance) {
+
+    let grid = createRandomGrid();
+
+    // choose random symbol (not scatter)
+    const normalSymbols = SYMBOLS.filter(s => !s.scatter);
+    const target =
+      normalSymbols[Math.floor(Math.random() * normalSymbols.length)];
+
+    // place 6 same symbols together
+    const positions = [
+      [1,1],[1,2],[1,3],
+      [2,1],[2,2],[2,3]
+    ];
+
+    positions.forEach(([r,c]) => {
+      grid[r][c] = {
+        sym: { ...target, uid: Math.random() },
+        state: "idle"
+      };
+    });
+
+    return grid;
+  }
+
+  // 20% normal random board
+  return createRandomGrid();
 }
 
 function findClusters(grid) {
@@ -150,18 +185,32 @@ function WinTicker() {
 }
 
 /* ── SYMBOL CELL ── */
-function SymCell({ cell, isWin, isBomb }) {
+function SymCell({ cell, isWin, isBomb, bet = 1 }) {
   const s = cell.sym;
+
+  // highest possible payout shown on card
+  const topPrice =
+    s.scatter
+      ? `100x`
+      : `${Math.max(...s.mult.filter(v => v > 0))}x`;
+
   return (
     <div style={{
-      position:"relative", borderRadius:7,
+      position:"relative",
+      borderRadius:7,
       background: isWin
         ? `radial-gradient(circle at 50% 50%, ${s.color}44, ${s.color}11)`
         : "rgba(255,255,255,0.25)",
-      border: isWin ? `2px solid ${s.color}` : "1.5px solid rgba(255,255,255,0.45)",
-      display:"flex", alignItems:"center", justifyContent:"center",
+      border: isWin
+        ? `2px solid ${s.color}`
+        : "1.5px solid rgba(255,255,255,0.45)",
+      display:"flex",
+      alignItems:"center",
+      justifyContent:"center",
       aspectRatio:"1",
-      boxShadow: isWin ? `0 0 14px ${s.color}88` : "0 1px 3px rgba(0,0,0,.07)",
+      boxShadow: isWin
+        ? `0 0 14px ${s.color}88`
+        : "0 1px 3px rgba(0,0,0,.07)",
       transform: isBomb ? "scale(0)" : isWin ? "scale(1.07)" : "scale(1)",
       transition:"all 0.2s cubic-bezier(.34,1.56,.64,1)",
       opacity: isBomb ? 0 : 1,
@@ -170,24 +219,42 @@ function SymCell({ cell, isWin, isBomb }) {
       animationDuration:"0.35s",
       animationTimingFunction:"cubic-bezier(.34,1.3,.64,1)",
     }}>
-      <img src={s.img} alt={s.label} style={{
-        width:"86%", height:"86%", objectFit:"contain",
-        mixBlendMode:"multiply",
-        filter: isWin
-          ? "drop-shadow(0 0 5px white) brightness(1.1) contrast(1.05)"
-          : "contrast(1.05) saturate(1.1)",
-        pointerEvents:"none", display:"block",
-      }} />
+
+      {/* SYMBOL IMAGE */}
+      <img
+        src={s.img}
+        alt={s.label}
+        style={{
+          width:"86%",
+          height:"86%",
+          objectFit:"contain",
+          mixBlendMode:"multiply",
+          filter: isWin
+            ? "drop-shadow(0 0 5px white) brightness(1.1) contrast(1.05)"
+            : "contrast(1.05) saturate(1.1)",
+          pointerEvents:"none",
+          display:"block",
+        }}
+      />
+
+
+
+      {/* WIN GLOW */}
       {isWin && (
         <div style={{
-          position:"absolute", inset:0, borderRadius:7,
+          position:"absolute",
+          inset:0,
+          borderRadius:7,
           background:`radial-gradient(circle,${s.color}28,transparent)`,
           animation:"pulse 0.45s ease-in-out infinite alternate",
         }} />
       )}
+
+      {/* EXPLOSION */}
       {isBomb && (
         <div style={{
-          position:"absolute", inset:-10,
+          position:"absolute",
+          inset:-10,
           background:`radial-gradient(circle,${s.color}cc,transparent 70%)`,
           borderRadius:"50%",
           animation:"explode 0.35s ease-out forwards",
@@ -549,18 +616,30 @@ export default function SweetBonanza2500() {
           ))}
 
           {/* Message */}
-          <div style={{ textAlign:"center", minHeight:22, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            {message && (
-              <div style={{
-                background: msgIsHighlight ? "linear-gradient(135deg,#f39c12,#e74c3c)" : "rgba(255,255,255,.8)",
-                color: msgIsHighlight ? "#fff" : "#c0392b",
-                fontWeight:900, fontSize:11, letterSpacing:.5,
-                padding:"3px 14px", borderRadius:16,
-                boxShadow: msgIsHighlight ? "0 0 18px rgba(231,76,60,.5)" : "none",
-                animation: msgIsHighlight ? "popIn .3s cubic-bezier(.34,1.56,.64,1)" : "none",
-              }}>{message}</div>
-            )}
-          </div>
+{roundWin > 0 && (
+  <div style={{
+    position:"absolute",
+    left:"50%",
+    bottom:70,
+    transform:"translateX(-50%)",
+    zIndex:30,
+    background:"rgba(0,0,0,.45)",
+    padding:"4px 12px",
+    borderRadius:14,
+    border:"1px solid rgba(255,255,255,.15)",
+    backdropFilter:"blur(4px)",
+  }}>
+    <div style={{
+      color:"#ffe066",
+      fontSize:12,
+      fontWeight:900,
+      textAlign:"center",
+      letterSpacing:0.5,
+    }}>
+      WIN ₱{roundWin.toFixed(2)}
+    </div>
+  </div>
+)}
 
           {/* Grid */}
           <div style={{
@@ -570,20 +649,37 @@ export default function SweetBonanza2500() {
             gap:4,
           }}>
             {grid.map((row, ri) => row.map((cell, ci) => (
-              <SymCell
-                key={`${ri}-${ci}-${cell.sym.uid}`}
-                cell={cell}
-                isWin={winCells.has(`${ri},${ci}`)}
-                isBomb={bombCells.has(`${ri},${ci}`)}
-              />
+<SymCell
+  key={`${ri}-${ci}-${cell.sym.uid}`}
+  cell={cell}
+  isWin={winCells.has(`${ri},${ci}`)}
+  isBomb={bombCells.has(`${ri},${ci}`)}
+  bet={bet}
+/>
             )))}
           </div>
 
-          {roundWin > 0 && (
-            <div style={{ textAlign:"center", fontSize:11, fontWeight:900, color:"#c0392b", flexShrink:0, paddingTop:2 }}>
-              Round Win: ₱{roundWin.toFixed(2)}
-            </div>
-          )}
+{roundWin > 0 && (
+  <div style={{
+    marginTop:4,
+    display:"flex",
+    justifyContent:"center",
+  }}>
+    <div style={{
+      background:"rgba(0,0,0,.28)",
+      color:"#ffe066",
+      fontWeight:800,
+      fontSize:10,
+      padding:"4px 10px",
+      borderRadius:12,
+      border:"1px solid rgba(255,255,255,.12)",
+      minWidth:90,
+      textAlign:"center",
+    }}>
+      WIN ₱{roundWin.toFixed(2)}
+    </div>
+  </div>
+)}
 
           {/* Big Win overlay */}
           {showWin && (
