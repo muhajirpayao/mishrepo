@@ -85,6 +85,44 @@ function clusterMultiplier(sym, size) {
   return sym.mult[idx] ?? sym.mult[sym.mult.length - 1];
 }
 
+/* ── CONFIRM MODAL ── */
+function ConfirmModal({ title, message, confirmLabel, onConfirm, onCancel }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div style={{
+        background: "linear-gradient(145deg,#fff8f0,#fff)",
+        borderRadius: 20, padding: "28px 28px 22px",
+        maxWidth: 320, width: "90%",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+        border: "2px solid rgba(255,255,255,0.9)",
+        textAlign: "center",
+        animation: "popIn .25s cubic-bezier(.34,1.56,.64,1)",
+      }}>
+        <div style={{ fontSize: 36, marginBottom: 8 }}>🎰</div>
+        <div style={{ fontWeight: 900, fontSize: 18, color: "#c0392b", marginBottom: 8 }}>{title}</div>
+        <div style={{ fontSize: 13, color: "#666", marginBottom: 20, lineHeight: 1.5 }}>{message}</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onCancel} style={{
+            flex: 1, padding: "10px 0", borderRadius: 12,
+            background: "rgba(200,100,130,.12)", border: "1.5px solid rgba(200,100,130,.3)",
+            color: "#c0392b", fontWeight: 700, fontSize: 13, cursor: "pointer",
+          }}>Cancel</button>
+          <button onClick={onConfirm} style={{
+            flex: 1, padding: "10px 0", borderRadius: 12,
+            background: "linear-gradient(135deg,#e74c3c,#c0392b)", border: "none",
+            color: "#fff", fontWeight: 900, fontSize: 13, cursor: "pointer",
+            boxShadow: "0 4px 14px rgba(231,76,60,.5)",
+          }}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── WIN TICKER ── */
 function WinTicker() {
   const [items] = useState(() => {
@@ -93,11 +131,10 @@ function WinTicker() {
   });
   return (
     <div style={{
-      width: "100%", overflow: "hidden", zIndex: 20,
+      width: "100%", overflow: "hidden",
       background: "linear-gradient(90deg,rgba(255,80,160,.9),rgba(255,150,40,.9),rgba(255,80,160,.9))",
       borderBottom: "1.5px solid rgba(255,255,255,.4)",
       padding: "5px 0",
-      flexShrink: 0,
     }}>
       <div style={{
         display: "flex", gap: 56,
@@ -141,17 +178,26 @@ function SymCell({ cell, isWin, isBomb }) {
       animationDuration: "0.35s",
       animationTimingFunction: "cubic-bezier(.34,1.3,.64,1)",
     }}>
+      {/* White background remover: use a white bg div with multiply blend */}
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: 8,
+        background: "#fff",
+        mixBlendMode: "destination-out",
+        opacity: 0,
+      }} />
       <img
         src={s.img}
         alt={s.label}
         style={{
           width: "84%", height: "84%",
           objectFit: "contain",
+          // mix-blend-mode multiply removes white backgrounds on light-bg cells
           mixBlendMode: "multiply",
-          background: "transparent",
-filter: "drop-shadow(0 0 5px rgba(255,255,255,0.3))",
-          filter: isWin ? "drop-shadow(0 0 5px white) brightness(1.1)" : "none",
+          filter: isWin
+            ? "drop-shadow(0 0 6px white) brightness(1.1) contrast(1.05)"
+            : "contrast(1.05) saturate(1.1)",
           pointerEvents: "none",
+          display: "block",
         }}
       />
       {isWin && (
@@ -192,6 +238,7 @@ export default function SweetBonanza2500() {
   const [autoSpin, setAutoSpin] = useState(false);
   const [dcOn, setDcOn] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [confirm, setConfirm] = useState(null); // { type, onConfirm }
   const autoRef = useRef(false);
   const spinningRef = useRef(false);
 
@@ -295,38 +342,73 @@ export default function SweetBonanza2500() {
     return () => window.removeEventListener("keydown", h);
   }, [doSpin]);
 
-  const buyFeature = () => {
+  const handleBuyFeature = () => {
     if (balance < bet * 100) { setMessage("💸 Insufficient balance!"); return; }
-    setBalance(b => Math.round((b - bet * 100) * 100) / 100);
-    setFreeSpins(12); setInFreeSpins(true); setMultiplier(2);
-    setMessage("🎰 12 FREE SPINS ACTIVATED!");
+    setConfirm({
+      type: "buy",
+      title: "Buy Feature?",
+      message: `This will cost ₱${(bet * 100).toFixed(2)} and activate 12 FREE SPINS. Are you sure?`,
+      confirmLabel: `Buy ₱${(bet * 100).toFixed(2)}`,
+      onConfirm: () => {
+        setConfirm(null);
+        setBalance(b => Math.round((b - bet * 100) * 100) / 100);
+        setFreeSpins(12); setInFreeSpins(true); setMultiplier(2);
+        setMessage("🎰 12 FREE SPINS ACTIVATED!");
+      },
+    });
+  };
+
+  const handleAutoSpin = () => {
+    if (autoSpin) {
+      setAutoSpin(false);
+      return;
+    }
+    setConfirm({
+      type: "auto",
+      title: "Enable Auto Spin?",
+      message: "Auto spin will keep spinning automatically until you stop it or run out of balance. Continue?",
+      confirmLabel: "Start Auto Spin",
+      onConfirm: () => {
+        setConfirm(null);
+        setAutoSpin(true);
+      },
+    });
   };
 
   const msgIsHighlight = message.includes("WIN") || message.includes("FREE") || message.includes("SPINS");
 
   return (
-<div style={{
-  width: "100vw",
-  height: "100vh",
-  overflow: "hidden",
-
-  backgroundImage: `url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat",
-
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-
-  fontFamily: "'Segoe UI',sans-serif",
-  position: "relative",
-}}>
+    <div style={{
+      width: "100vw",
+      height: "100vh",
+      overflow: "hidden",
+      position: "fixed",
+      top: 0, left: 0,
+      backgroundImage: `url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      fontFamily: "'Segoe UI',sans-serif",
+    }}>
       {/* overlay */}
       <div style={{ position:"absolute", inset:0, background:"rgba(80,180,255,0.12)", pointerEvents:"none", zIndex:1 }} />
 
+      {/* Confirm Modal */}
+      {confirm && (
+        <ConfirmModal
+          title={confirm.title}
+          message={confirm.message}
+          confirmLabel={confirm.confirmLabel}
+          onConfirm={confirm.onConfirm}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+
       {/* ── TICKER ── */}
-      <div style={{ width:"100%", position:"relative", zIndex:20 }}>
+      <div style={{ width:"100%", position:"relative", zIndex:20, flexShrink: 0 }}>
         <WinTicker />
       </div>
 
@@ -334,39 +416,41 @@ export default function SweetBonanza2500() {
       <div style={{
         width:"100%", maxWidth:980,
         display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding: isMobile ? "8px 10px 0" : "10px 16px 0",
+        padding: isMobile ? "6px 10px 0" : "8px 16px 0",
         position:"relative", zIndex:10, flexWrap:"wrap", gap:6,
+        flexShrink: 0,
       }}>
         <div style={{ display:"flex", gap:6 }}>
           {[["CREDIT", `₱${balance.toFixed(2)}`, "#c0392b"], ["TOTAL WIN", `₱${totalWin.toFixed(2)}`, "#27ae60"]].map(([lbl, val, col]) => (
             <div key={lbl} style={{ background:"rgba(255,255,255,.82)", backdropFilter:"blur(8px)", borderRadius:10,
-              padding: isMobile ? "4px 10px" : "6px 14px", border:"1.5px solid rgba(255,255,255,.95)" }}>
+              padding: isMobile ? "3px 8px" : "5px 12px", border:"1.5px solid rgba(255,255,255,.95)" }}>
               <div style={{ fontSize:7, color:"rgba(80,20,50,.6)", fontWeight:700, letterSpacing:1 }}>{lbl}</div>
-              <div style={{ fontSize: isMobile ? 13 : 16, fontWeight:900, color:col }}>{val}</div>
+              <div style={{ fontSize: isMobile ? 12 : 15, fontWeight:900, color:col }}>{val}</div>
             </div>
           ))}
         </div>
 
         <div style={{ textAlign:"center", flex:1, minWidth: isMobile ? "100%" : "auto", order: isMobile ? -1 : 0 }}>
-          <div style={{ fontWeight:900, fontSize:"clamp(18px,5vw,36px)",
+          <div style={{ fontWeight:900, fontSize:"clamp(16px,4vw,30px)",
             background:"linear-gradient(135deg,#ff6bcd,#ff9f43,#ff6bcd)",
             WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
             letterSpacing:2, filter:"drop-shadow(0 2px 8px rgba(255,107,205,.7))" }}>Sweet Bonanza</div>
-          <div style={{ fontSize:8, color:"rgba(80,10,50,.7)", letterSpacing:3, fontWeight:700 }}>2500 • PRAGMATIC PLAY</div>
+          <div style={{ fontSize:7, color:"rgba(80,10,50,.7)", letterSpacing:3, fontWeight:700 }}>2500 • PRAGMATIC PLAY</div>
         </div>
 
         <div style={{ background:"rgba(255,255,255,.82)", backdropFilter:"blur(8px)", borderRadius:10,
-          padding: isMobile ? "4px 10px" : "6px 14px", border:"1.5px solid rgba(255,255,255,.95)", textAlign:"right" }}>
+          padding: isMobile ? "3px 8px" : "5px 12px", border:"1.5px solid rgba(255,255,255,.95)", textAlign:"right" }}>
           <div style={{ fontSize:7, color:"rgba(80,20,50,.6)", fontWeight:700, letterSpacing:1 }}>BET</div>
-          <div style={{ fontSize: isMobile ? 13 : 16, fontWeight:900, color:"#c0392b" }}>₱{bet.toFixed(2)}</div>
+          <div style={{ fontSize: isMobile ? 12 : 15, fontWeight:900, color:"#c0392b" }}>₱{bet.toFixed(2)}</div>
         </div>
       </div>
 
       {/* FREE SPINS BANNER */}
       {inFreeSpins && (
         <div style={{ background:"linear-gradient(135deg,#f39c12,#e74c3c)", color:"#fff", fontWeight:900,
-          fontSize:13, padding:"6px 20px", borderRadius:30, boxShadow:"0 4px 20px rgba(231,76,60,.5)",
-          marginTop:6, letterSpacing:1, zIndex:10, animation:"pulse .6s ease-in-out infinite alternate", position:"relative" }}>
+          fontSize:12, padding:"4px 16px", borderRadius:30, boxShadow:"0 4px 20px rgba(231,76,60,.5)",
+          marginTop:4, letterSpacing:1, zIndex:10, animation:"pulse .6s ease-in-out infinite alternate",
+          position:"relative", flexShrink: 0 }}>
           ⭐ FREE SPINS: {freeSpins} remaining • Multiplier ×{multiplier}
         </div>
       )}
@@ -375,32 +459,30 @@ export default function SweetBonanza2500() {
       <div style={{
         width:"100%", maxWidth:980,
         display:"flex", flexDirection: isMobile ? "column" : "row",
-        gap: isMobile ? 8 : 10,
-        padding: isMobile ? "8px 8px" : "10px 12px",
+        gap: isMobile ? 6 : 10,
+        padding: isMobile ? "6px 8px" : "8px 12px",
         position:"relative", zIndex:10, alignItems:"flex-start",
+        flex: 1, minHeight: 0,
       }}>
 
-        {/* LEFT PANEL — hidden on mobile, shown as top row instead */}
+        {/* LEFT PANEL — desktop only */}
         {!isMobile && (
-          <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:148, maxWidth:160, flexShrink:0 }}>
-            {/* Buy Feature */}
+          <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:140, maxWidth:155, flexShrink:0 }}>
             <div style={{ background:"linear-gradient(135deg,#f39c12,#e67e22)", borderRadius:14,
-              padding:"12px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)",
+              padding:"10px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)",
               boxShadow:"0 4px 16px rgba(230,126,34,.5)" }}>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.85)", fontWeight:700, letterSpacing:1 }}>BUY FEATURE</div>
-              <div style={{ fontSize:22, fontWeight:900, color:"#fff" }}>₱{(bet * 100).toFixed(2)}</div>
-              <button onClick={buyFeature} style={{ marginTop:6, background:"rgba(255,255,255,.3)",
+              <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>₱{(bet * 100).toFixed(2)}</div>
+              <button onClick={handleBuyFeature} style={{ marginTop:6, background:"rgba(255,255,255,.3)",
                 border:"1.5px solid rgba(255,255,255,.7)", borderRadius:20, padding:"4px 0",
                 color:"#fff", fontWeight:700, fontSize:10, cursor:"pointer", width:"100%" }}>BUY NOW</button>
             </div>
-            {/* Bet + DC */}
             <div style={{ background:"linear-gradient(135deg,#27ae60,#1e8449)", borderRadius:14,
-              padding:"12px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)",
+              padding:"10px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)",
               boxShadow:"0 4px 16px rgba(39,174,96,.5)" }}>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.85)", fontWeight:700, letterSpacing:1 }}>BET</div>
-              <div style={{ fontSize:22, fontWeight:900, color:"#fff" }}>₱{bet.toFixed(2)}</div>
+              <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>₱{bet.toFixed(2)}</div>
               <div style={{ marginTop:4, fontSize:9, color:"rgba(255,255,255,.75)", fontWeight:700 }}>DOUBLE CHANCE</div>
-              <div style={{ fontSize:9, color:"rgba(255,255,255,.75)", fontWeight:700 }}>TO WIN FEATURE</div>
               <button onClick={() => setDcOn(d => !d)} style={{ marginTop:6,
                 background: dcOn ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.2)",
                 border:"1.5px solid rgba(255,255,255,.6)", borderRadius:12,
@@ -408,14 +490,14 @@ export default function SweetBonanza2500() {
                 {dcOn ? "✅ ON" : "⬛ OFF"}
               </button>
             </div>
-            {/* Paytable */}
             <div style={{ background:"rgba(255,255,255,.78)", backdropFilter:"blur(8px)", borderRadius:14,
               padding:"8px", border:"1.5px solid rgba(255,255,255,.95)" }}>
               <div style={{ fontSize:8, color:"rgba(100,20,50,.6)", fontWeight:700, letterSpacing:1,
                 textAlign:"center", marginBottom:6 }}>PAYTABLE</div>
               {SYMBOLS.map(s => (
                 <div key={s.id} style={{ display:"flex", alignItems:"center", gap:4, padding:"2px 0" }}>
-                  <div style={{ width:24, height:24, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <div style={{ width:24, height:24, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+                    background:"#fff", borderRadius:4 }}>
                     <img src={s.img} alt={s.label} style={{ width:22, height:22, objectFit:"contain", mixBlendMode:"multiply" }} />
                   </div>
                   <span style={{ fontSize:8, color:"rgba(120,20,50,.7)", fontWeight:700 }}>
@@ -427,23 +509,23 @@ export default function SweetBonanza2500() {
           </div>
         )}
 
-        {/* Mobile: compact top bar with buy feature + bet */}
+        {/* Mobile: compact top bar */}
         {isMobile && (
-          <div style={{ display:"flex", gap:6, width:"100%" }}>
+          <div style={{ display:"flex", gap:6, width:"100%", flexShrink: 0 }}>
             <div style={{ flex:1, background:"linear-gradient(135deg,#f39c12,#e67e22)", borderRadius:12,
-              padding:"8px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)" }}>
+              padding:"6px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)" }}>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.85)", fontWeight:700 }}>BUY FEATURE</div>
-              <div style={{ fontSize:16, fontWeight:900, color:"#fff" }}>₱{(bet * 100).toFixed(2)}</div>
-              <button onClick={buyFeature} style={{ marginTop:4, background:"rgba(255,255,255,.3)",
-                border:"1.5px solid rgba(255,255,255,.7)", borderRadius:16, padding:"3px 0",
+              <div style={{ fontSize:14, fontWeight:900, color:"#fff" }}>₱{(bet * 100).toFixed(2)}</div>
+              <button onClick={handleBuyFeature} style={{ marginTop:3, background:"rgba(255,255,255,.3)",
+                border:"1.5px solid rgba(255,255,255,.7)", borderRadius:16, padding:"2px 0",
                 color:"#fff", fontWeight:700, fontSize:9, cursor:"pointer", width:"100%" }}>BUY NOW</button>
             </div>
             <div style={{ flex:1, background:"linear-gradient(135deg,#27ae60,#1e8449)", borderRadius:12,
-              padding:"8px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)" }}>
+              padding:"6px 10px", textAlign:"center", border:"2px solid rgba(255,255,255,.5)" }}>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.85)", fontWeight:700 }}>BET</div>
-              <div style={{ fontSize:16, fontWeight:900, color:"#fff" }}>₱{bet.toFixed(2)}</div>
+              <div style={{ fontSize:14, fontWeight:900, color:"#fff" }}>₱{bet.toFixed(2)}</div>
               <div style={{ fontSize:8, color:"rgba(255,255,255,.75)", fontWeight:700 }}>DOUBLE CHANCE</div>
-              <button onClick={() => setDcOn(d => !d)} style={{ marginTop:3,
+              <button onClick={() => setDcOn(d => !d)} style={{ marginTop:2,
                 background: dcOn ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.2)",
                 border:"1.5px solid rgba(255,255,255,.6)", borderRadius:10,
                 padding:"2px 10px", fontSize:9, color:"#fff", fontWeight:700, cursor:"pointer" }}>
@@ -461,30 +543,27 @@ export default function SweetBonanza2500() {
             borderRadius:18,
             border:"2.5px solid rgba(255,255,255,.8)",
             boxShadow:"0 8px 40px rgba(100,180,255,.3), inset 0 1px 0 rgba(255,255,255,.7)",
-            padding: isMobile ? "8px" : "12px",
+            padding: isMobile ? "6px" : "10px",
             position:"relative",
           }}>
-            {/* corner candies */}
-            {["top:5px;left:7px","top:5px;right:7px","bottom:5px;left:7px","bottom:5px;right:7px"].map((s,i)=>(
-              <span key={i} style={{ position:"absolute", fontSize: isMobile ? 12 : 15,
+            {["top:4px;left:6px","top:4px;right:6px","bottom:4px;left:6px","bottom:4px;right:6px"].map((s,i)=>(
+              <span key={i} style={{ position:"absolute", fontSize: isMobile ? 11 : 14,
                 ...Object.fromEntries(s.split(";").map(p=>p.split(":"))) }}>🍬</span>
             ))}
-            {/* Message */}
-            <div style={{ textAlign:"center", marginBottom:6, minHeight:26,
+            <div style={{ textAlign:"center", marginBottom:4, minHeight:24,
               display:"flex", alignItems:"center", justifyContent:"center" }}>
               {message && (
                 <div style={{
                   background: msgIsHighlight ? "linear-gradient(135deg,#f39c12,#e74c3c)" : "rgba(255,255,255,.78)",
                   color: msgIsHighlight ? "#fff" : "#c0392b",
-                  fontWeight:900, fontSize: isMobile ? 11 : 13, letterSpacing:.5,
-                  padding:"4px 16px", borderRadius:18,
+                  fontWeight:900, fontSize: isMobile ? 10 : 12, letterSpacing:.5,
+                  padding:"3px 14px", borderRadius:18,
                   boxShadow: msgIsHighlight ? "0 0 20px rgba(231,76,60,.5)" : "none",
                   animation: msgIsHighlight ? "popIn .3s cubic-bezier(.34,1.56,.64,1)" : "none",
                 }}>{message}</div>
               )}
             </div>
-            {/* Grid */}
-            <div style={{ display:"grid", gridTemplateColumns:`repeat(${COLS},1fr)`, gap: isMobile ? 4 : 6 }}>
+            <div style={{ display:"grid", gridTemplateColumns:`repeat(${COLS},1fr)`, gap: isMobile ? 3 : 5 }}>
               {grid.map((row, ri) => row.map((cell, ci) => (
                 <SymCell
                   key={`${ri}-${ci}-${cell.sym.uid}`}
@@ -495,13 +574,12 @@ export default function SweetBonanza2500() {
               )))}
             </div>
             {roundWin > 0 && (
-              <div style={{ textAlign:"center", marginTop:6, fontSize: isMobile ? 11 : 13, fontWeight:900, color:"#c0392b" }}>
+              <div style={{ textAlign:"center", marginTop:4, fontSize: isMobile ? 10 : 12, fontWeight:900, color:"#c0392b" }}>
                 Round Win: ₱{roundWin.toFixed(2)}
               </div>
             )}
           </div>
 
-          {/* Big Win Overlay */}
           {showWin && (
             <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center",
               justifyContent:"center", background:"rgba(0,0,0,.45)", borderRadius:18,
@@ -522,33 +600,31 @@ export default function SweetBonanza2500() {
           )}
         </div>
 
-        {/* RIGHT PANEL (free spins info) — desktop only */}
         {!isMobile && inFreeSpins && (
-          <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:110, maxWidth:128, flexShrink:0 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:8, minWidth:105, maxWidth:120, flexShrink:0 }}>
             <div style={{ background:"linear-gradient(135deg,#8e44ad,#6c3483)", borderRadius:14,
               padding:10, textAlign:"center", border:"2px solid rgba(255,255,255,.4)" }}>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.7)", fontWeight:700, letterSpacing:1 }}>MULTIPLIER</div>
-              <div style={{ fontSize:28, fontWeight:900, color:"#ffd700" }}>×{multiplier}</div>
+              <div style={{ fontSize:26, fontWeight:900, color:"#ffd700" }}>×{multiplier}</div>
             </div>
             <div style={{ background:"linear-gradient(135deg,#e74c3c,#c0392b)", borderRadius:14,
               padding:10, textAlign:"center", border:"2px solid rgba(255,255,255,.4)" }}>
               <div style={{ fontSize:9, color:"rgba(255,255,255,.7)", fontWeight:700, letterSpacing:1 }}>FREE SPINS</div>
-              <div style={{ fontSize:28, fontWeight:900, color:"#fff" }}>{freeSpins}</div>
+              <div style={{ fontSize:26, fontWeight:900, color:"#fff" }}>{freeSpins}</div>
             </div>
           </div>
         )}
       </div>
 
       {/* ── BOTTOM CONTROLS ── */}
-      <div style={{ width:"100%", maxWidth:980, padding: isMobile ? "0 8px 16px" : "0 12px 20px",
-        position:"relative", zIndex:10 }}>
+      <div style={{ width:"100%", maxWidth:980, padding: isMobile ? "0 8px 10px" : "0 12px 14px",
+        position:"relative", zIndex:10, flexShrink: 0 }}>
         <div style={{ background:"rgba(255,255,255,.78)", backdropFilter:"blur(12px)",
           borderRadius:16, border:"2px solid rgba(255,255,255,.9)",
           boxShadow:"0 4px 20px rgba(100,180,255,.2)",
-          padding: isMobile ? "10px 10px" : "12px 16px",
-          display:"flex", flexDirection:"column", gap:8 }}>
+          padding: isMobile ? "8px 10px" : "10px 16px",
+          display:"flex", flexDirection:"column", gap:6 }}>
 
-          {/* Bet selector */}
           <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
             <span style={{ fontSize:9, color:"rgba(150,30,60,.7)", fontWeight:700, letterSpacing:1 }}>BET:</span>
             <div style={{ display:"flex", gap:3, flexWrap:"wrap" }}>
@@ -556,9 +632,9 @@ export default function SweetBonanza2500() {
                 <button key={v} onClick={() => !spinning && setBet(v)} style={{
                   background: bet === v ? "linear-gradient(135deg,#e74c3c,#c0392b)" : "rgba(255,255,255,.65)",
                   border: bet === v ? "1.5px solid #c0392b" : "1.5px solid rgba(200,100,130,.3)",
-                  borderRadius:7, padding: isMobile ? "4px 7px" : "5px 9px",
+                  borderRadius:7, padding: isMobile ? "3px 6px" : "4px 8px",
                   color: bet === v ? "#fff" : "#c0392b",
-                  fontWeight:700, fontSize: isMobile ? 9 : 10, cursor:"pointer",
+                  fontWeight:700, fontSize: isMobile ? 8 : 9, cursor:"pointer",
                   boxShadow: bet === v ? "0 2px 8px rgba(192,57,43,.4)" : "none",
                   transition:"all .15s",
                 }}>₱{v.toFixed(2)}</button>
@@ -566,14 +642,13 @@ export default function SweetBonanza2500() {
             </div>
           </div>
 
-          {/* Spin row */}
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <button onClick={() => setTurbo(t => !t)} style={{
               background: turbo ? "linear-gradient(135deg,#f39c12,#e67e22)" : "rgba(255,255,255,.65)",
               border: turbo ? "1.5px solid #e67e22" : "1.5px solid rgba(200,100,130,.3)",
-              borderRadius:10, padding: isMobile ? "8px 10px" : "10px 14px",
+              borderRadius:10, padding: isMobile ? "7px 9px" : "9px 13px",
               color: turbo ? "#fff" : "#c0392b",
-              fontWeight:700, fontSize: isMobile ? 10 : 11, cursor:"pointer", whiteSpace:"nowrap",
+              fontWeight:700, fontSize: isMobile ? 9 : 10, cursor:"pointer", whiteSpace:"nowrap",
             }}>⚡ {turbo ? "ON" : "TURBO"}</button>
 
             <button onClick={doSpin} disabled={spinning} style={{
@@ -581,9 +656,9 @@ export default function SweetBonanza2500() {
               background: spinning ? "rgba(200,100,130,.3)"
                 : inFreeSpins ? "linear-gradient(135deg,#f39c12,#e74c3c)"
                 : "linear-gradient(135deg,#e74c3c,#c0392b,#e74c3c)",
-              border:"none", borderRadius:28, padding: isMobile ? "13px 0" : "15px 0",
+              border:"none", borderRadius:28, padding: isMobile ? "11px 0" : "13px 0",
               color: spinning ? "rgba(150,50,70,.5)" : "#fff",
-              fontWeight:900, fontSize: isMobile ? 15 : 17, cursor: spinning ? "not-allowed" : "pointer",
+              fontWeight:900, fontSize: isMobile ? 14 : 16, cursor: spinning ? "not-allowed" : "pointer",
               letterSpacing:2, boxShadow: spinning ? "none" : "0 6px 22px rgba(231,76,60,.5)",
               transition:"all .2s",
             }}>
@@ -595,18 +670,18 @@ export default function SweetBonanza2500() {
                 : inFreeSpins ? "⭐ FREE SPIN!" : "SPIN ▶"}
             </button>
 
-            <button onClick={() => setAutoSpin(a => !a)} style={{
+            <button onClick={handleAutoSpin} style={{
               background: autoSpin ? "linear-gradient(135deg,#27ae60,#1e8449)" : "rgba(255,255,255,.65)",
               border: autoSpin ? "1.5px solid #27ae60" : "1.5px solid rgba(200,100,130,.3)",
-              borderRadius:10, padding: isMobile ? "8px 10px" : "10px 14px",
+              borderRadius:10, padding: isMobile ? "7px 9px" : "9px 13px",
               color: autoSpin ? "#fff" : "#c0392b",
-              fontWeight:700, fontSize: isMobile ? 10 : 11, cursor:"pointer", whiteSpace:"nowrap",
-            }}>🔁 {autoSpin ? "ON" : "AUTO"}</button>
+              fontWeight:700, fontSize: isMobile ? 9 : 10, cursor:"pointer", whiteSpace:"nowrap",
+            }}>🔁 {autoSpin ? "STOP" : "AUTO"}</button>
 
             <button onClick={doSpin} style={{
               background:"linear-gradient(135deg,#888,#555)", border:"none",
-              borderRadius:"50%", width: isMobile ? 38 : 44, height: isMobile ? 38 : 44,
-              color:"#fff", fontSize: isMobile ? 15 : 18, cursor:"pointer",
+              borderRadius:"50%", width: isMobile ? 34 : 40, height: isMobile ? 34 : 40,
+              color:"#fff", fontSize: isMobile ? 14 : 16, cursor:"pointer",
               boxShadow:"0 3px 10px rgba(0,0,0,.3)", flexShrink:0,
             }}>↻</button>
           </div>
@@ -619,7 +694,6 @@ export default function SweetBonanza2500() {
         @keyframes explode      { from { transform:scale(.5); opacity:1; } to { transform:scale(2.5); opacity:0; } }
         @keyframes dropIn       { from { transform:translateY(-28px) scale(.7); opacity:0; } to { transform:translateY(0) scale(1); opacity:1; } }
         @keyframes popIn        { from { transform:scale(.4); opacity:0; } to { transform:scale(1); opacity:1; } }
-        @keyframes bgWave       { 0% { background-position:0% 50%; } 100% { background-position:100% 50%; } }
         @keyframes tickerScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-33.33%); } }
       `}</style>
     </div>
