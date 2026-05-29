@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 const SYMBOLS = [
-  { id:"lollipop",   img:"https://i.pinimg.com/736x/eb/19/17/eb1917189c52172119467aa320d20b07.jpg", label:"Lollipop",   color:"#ff69b4", mult:[0,0,0,0,0,0,0,0,36.4,50,100,150,200,750], scatter:true },
+  { id:"lollipop",   img:"https://i.pinimg.com/736x/27/f8/3d/27f83d803052c68ed11c2db0f3a0b5cd.jpg", label:"Lollipop",   color:"#ff69b4", mult:[0,0,0,0,0,0,0,0,36.4,50,100,150,200,750], scatter:true },
   { id:"grape",      img:"https://i.pinimg.com/736x/63/52/50/635250986165fb88dc9aae0c39ced57d.jpg", label:"Grape",      color:"#9b59b6", mult:[0,0,0,0,0,0,0,0,1.5,2,5,10,25,100] },
   { id:"apple",      img:"https://i.pinimg.com/736x/f3/e3/83/f3e38314103ac7d2ded97e8bc771a43b.jpg", label:"Apple",      color:"#e74c3c", mult:[0,0,0,0,0,0,0,0,1,1.5,4,8,20,75] },
   { id:"watermelon", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc_MSrpNk0n48iq-EqKUOlCIbfVcuNSXmmBA&s", label:"Watermelon", color:"#27ae60", mult:[0,0,0,0,0,0,0,0,0.8,1.2,3,6,15,60] },
-  { id:"plum",       img:"https://i.pinimg.com/736x/27/f8/3d/27f83d803052c68ed11c2db0f3a0b5cd.jpg", label:"Plum",       color:"#e67e22", mult:[0,0,0,0,0,0,0,0,0.5,0.8,2,4,10,40] },
+  { id:"plum",       img:"https://i.pinimg.com/736x/eb/19/17/eb1917189c52172119467aa320d20b07.jpg", label:"Plum",       color:"#e67e22", mult:[0,0,0,0,0,0,0,0,0.5,0.8,2,4,10,40] },
   { id:"banana",     img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYGjIvT4IvOwxFcbnVmk6Gdl-TtUWO6louDfjurWxguA&s", label:"Banana", color:"#f1c40f", mult:[0,0,0,0,0,0,0,0,0.4,0.6,1.5,3,8,25] },
   { id:"candy_blue", img:"https://i.pinimg.com/736x/e6/f0/25/e6f025e324cd91bb88ff3512ffc276d3.jpg", label:"Blue Candy", color:"#3498db", mult:[0,0,0,0,0,0,0,0,0.3,0.5,1,2,5,15] },
   { id:"heart",      img:"https://i.pinimg.com/736x/f0/e4/de/f0e4de27fe8e17576c838e2817134dcb.jpg", label:"Heart",      color:"#e91e63", mult:[0,0,0,0,0,0,0,0,0.2,0.4,0.8,1.5,3,10] },
@@ -96,7 +96,9 @@ function findClusters(grid) {
             }
           }
         }
-        if (cells.length >= 8) clusters.push({ sym, cells, size: cells.length });
+        if (cells.length >= 6) {
+  clusters.push({ sym, cells, size: cells.length });
+}
       }
     }
   }
@@ -363,13 +365,37 @@ export default function SweetBonanza2500() {
 
   const processTumble = async (g, mult, accumulated) => {
     const clusters = findClusters(g);
-    const scatters = countScatters(g);
-    if (scatters >= 4 && !inFreeSpins) {
-      const fs = scatters >= 6 ? 25 : scatters >= 5 ? 18 : 12;
-      setFreeSpins(fs); setInFreeSpins(true); setMultiplier(2);
-      setMessage(`🎰 ${fs} FREE SPINS TRIGGERED!`);
-      await delay(1400);
-    }
+const scatters = countScatters(g);
+
+if (scatters >= 3 && !inFreeSpins) {
+
+  const fs =
+    scatters >= 6 ? 25 :
+    scatters >= 5 ? 18 :
+    scatters >= 4 ? 15 :
+    12;
+
+  // SCATTER WIN AMOUNT (40% only)
+  const scatterWin = Math.round((bet * 0.4) * 100) / 100;
+
+  // give small scatter payout
+  setBalance(b => Math.round((b + scatterWin) * 100) / 100);
+
+  setFreeSpins(fs);
+  setInFreeSpins(true);
+  setMultiplier(2);
+
+  // SHOW SPECIAL MESSAGE
+  setMessage(`🍭 SCATTER! YOU GOT ${fs} FREE SPINS!`);
+
+  // SHOW POPUP
+  setShowWin(true);
+  setWinLevel("scatter");
+
+  await delay(2200);
+
+  setShowWin(false);
+}
     if (clusters.length === 0) {
       if (accumulated === 0) setMessage("Try again! 🍭");
       else {
@@ -696,11 +722,47 @@ export default function SweetBonanza2500() {
                   filter:"drop-shadow(0 0 20px rgba(255,215,0,.8))",
                   letterSpacing:3, textTransform:"uppercase",
                 }}>
-                  {winLevel === "epic" ? "⚡ EPIC WIN! ⚡" : winLevel === "mega" ? "🌟 MEGA WIN! 🌟" : "🎊 BIG WIN! 🎊"}
+                  {
+  winLevel === "scatter"
+    ? "🍭 SCATTER BONUS! 🍭"
+    : winLevel === "epic"
+    ? "⚡ EPIC WIN! ⚡"
+    : winLevel === "mega"
+    ? "🌟 MEGA WIN! 🌟"
+    : "🎊 BIG WIN! 🎊"
+}
                 </div>
-                <div style={{ fontSize:"clamp(16px,4vw,32px)", fontWeight:900, color:"#fff", marginTop:6 }}>
-                  ₱{roundWin.toFixed(2)}
-                </div>
+<div style={{
+  fontSize:"clamp(16px,4vw,32px)",
+  fontWeight:900,
+  color:"#fff",
+  marginTop:6
+}}>
+  {
+    winLevel === "scatter"
+      ? `🎰 ${freeSpins} FREE SPINS`
+      : `₱${roundWin.toFixed(2)}`
+  }
+</div>
+
+<button
+  onClick={() => setShowWin(false)}
+  style={{
+    marginTop:16,
+    padding:"12px 28px",
+    borderRadius:18,
+    border:"none",
+    cursor:"pointer",
+    fontWeight:900,
+    fontSize:16,
+    color:"#fff",
+    background:"linear-gradient(135deg,#ff6b35,#ff0080)",
+    boxShadow:"0 6px 20px rgba(255,0,120,.45)",
+    letterSpacing:1,
+  }}
+>
+  SPIN NOW ▶
+</button>
               </div>
             </div>
           )}
