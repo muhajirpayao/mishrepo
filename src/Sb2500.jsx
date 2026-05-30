@@ -1,23 +1,79 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-
+import lollipopImg from "./assets/lolipop.png";
+import heartImg from "./assets/heart.png";
+import candyBlueImg from "./assets/candyBlue.png";
+import grapeImg from "./assets/grape.png";
+import appleImg from "./assets/apple.png";
+import watermelonImg from "./assets/melon.png";
+import plumImg from "./assets/plum.png";
+import bananaImg from "./assets/banana.png";
 // ── SYMBOLS ──
 const SYMBOLS = [
-  { id:"lollipop",   img:"https://i.pinimg.com/736x/27/f8/3d/27f83d803052c68ed11c2db0f3a0b5cd.jpg", label:"Lollipop",   color:"#ff69b4", scatter:true,
-    mult:{8:0,9:0,10:0,11:0,12:36.4,13:50,14:100,15:150,16:200,17:750} },
-  { id:"heart",      img:"https://i.pinimg.com/736x/f0/e4/de/f0e4de27fe8e17576c838e2817134dcb.jpg", label:"Heart",      color:"#e91e63", weight:3,
-    mult:{8:5,9:8,10:12,11:16,12:25,13:50,14:100,15:200,16:400,17:1000} },
-  { id:"candy_blue", img:"https://i.pinimg.com/736x/e6/f0/25/e6f025e324cd91bb88ff3512ffc276d3.jpg", label:"Blue Candy", color:"#3498db", weight:5,
-    mult:{8:3,9:5,10:8,11:11,12:15,13:30,14:60,15:120,16:250,17:600} },
-  { id:"grape",      img:"https://i.pinimg.com/736x/63/52/50/635250986165fb88dc9aae0c39ced57d.jpg", label:"Grape",      color:"#9b59b6", weight:8,
-    mult:{8:1.5,9:2.5,10:4,11:6,12:10,13:20,14:40,15:80,16:150,17:400} },
-  { id:"apple",      img:"https://i.pinimg.com/736x/f3/e3/83/f3e38314103ac7d2ded97e8bc771a43b.jpg", label:"Apple",      color:"#e74c3c", weight:10,
-    mult:{8:1,9:1.5,10:3,11:5,12:8,13:15,14:30,15:60,16:100,17:250} },
-  { id:"watermelon", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc_MSrpNk0n48iq-EqKUOlCIbfVcuNSXmmBA&s", label:"Watermelon", color:"#27ae60", weight:12,
-    mult:{8:0.8,9:1.2,10:2,11:3.5,12:6,13:12,14:25,15:50,16:80,17:200} },
-  { id:"plum",       img:"https://i.pinimg.com/736x/eb/19/17/eb1917189c52172119467aa320d20b07.jpg", label:"Plum",       color:"#e67e22", weight:14,
-    mult:{8:0.5,9:0.8,10:1.5,11:2.5,12:4,13:8,14:16,15:32,16:60,17:150} },
-  { id:"banana",     img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYGjIvT4IvOwxFcbnVmk6Gdl-TtUWO6louDfjurWxguA&s", label:"Banana", color:"#f1c40f", weight:16,
-    mult:{8:0.25,9:0.4,10:0.8,11:1.2,12:2,13:5,14:10,15:20,16:40,17:100} },
+  {
+    id: "lollipop",
+    img: lollipopImg,
+    label: "Lollipop",
+    color: "#ff69b4",
+    scatter: true,
+    mult: {8:0,9:0,10:0,11:0,12:36.4,13:50,14:100,15:150,16:200,17:750}
+  },
+   {
+    id: "heart",
+    img: heartImg,
+    label: "Heart",
+    color: "#e91e63",
+    weight: 3,
+    mult: {8:5,9:8,10:12,11:16,12:25,13:50,14:100,15:200,16:400,17:1000}
+  },
+  {
+    id: "candy_blue",
+    img: candyBlueImg,
+    label: "Blue Candy",
+    color: "#3498db",
+    weight: 5,
+    mult: {8:3,9:5,10:8,11:11,12:15,13:30,14:60,15:120,16:250,17:600}
+  },
+  {
+    id: "grape",
+    img: grapeImg,
+    label: "Grape",
+    color: "#9b59b6",
+    weight: 8,
+    mult: {8:1.5,9:2.5,10:4,11:6,12:10,13:20,14:40,15:80,16:150,17:400}
+  },
+  {
+    id: "apple",
+    img: appleImg,
+    label: "Apple",
+    color: "#e74c3c",
+    weight: 10,
+    mult: {8:1,9:1.5,10:3,11:5,12:8,13:15,14:30,15:60,16:100,17:250}
+  },
+  {
+    id: "watermelon",
+    img: watermelonImg,
+    label: "Watermelon",
+    color: "#27ae60",
+    weight: 12,
+    mult: {8:0.8,9:1.2,10:2,11:3.5,12:6,13:12,14:25,15:50,16:80,17:200}
+  },
+  {
+    id: "plum",
+    img: plumImg,
+    label: "Plum",
+    color: "#e67e22",
+    weight: 14,
+    mult: {8:0.5,9:0.8,10:1.5,11:2.5,12:4,13:8,14:16,15:32,16:60,17:150}
+  },
+  {
+    id: "banana",
+    img: bananaImg,
+    label: "Banana",
+    color: "#f1c40f",
+    weight: 16,
+    mult: {8:0.25,9:0.4,10:0.8,11:1.2,12:2,13:5,14:10,15:20,16:40,17:100}
+  }
+
 ];
 
 const SCATTER = SYMBOLS[0];
@@ -42,7 +98,7 @@ function fmt(n) {
 // ── RNG ──
 // inFS: during free spins, scatterChance=0.05 (5%)
 function weightedRandom(inFS=false, buyFSMode=false) {
-  const scW = buyFSMode ? 0 : (inFS ? 5 : 2); // 5% scatter in FS, 0 when bought
+  const scW = buyFSMode ? 0 : (inFS ? 0.5 : 2); // 5% scatter in FS, 0 when bought
   const total = NORMAL_SYMS.reduce((a,s)=>a+s.weight,0)+scW;
   let r = Math.random()*total;
   for (const s of NORMAL_SYMS) { r-=s.weight; if(r<=0) return {...s,uid:Math.random(),dropDelay:Math.random()*0.18}; }
@@ -191,7 +247,7 @@ function SymCell({cell, isWin, isBomb, animKey}){
     <div style={{
       position:"relative",borderRadius:10,
       background:isWin?`radial-gradient(circle at 50% 50%,${s.color}55,${s.color}18)`:"rgba(255,255,255,0.22)",
-      border:isWin?`2.5px solid ${s.color}`:"1.5px solid rgba(255,255,255,0.5)",
+      border:isWin?`0.5px solid ${s.color}`:"1.5px solid rgba(255,255,255,0.5)",
       display:"flex",alignItems:"center",justifyContent:"center",
       aspectRatio:"1",
       boxShadow:isWin?`0 0 18px ${s.color}99, 0 0 6px ${s.color}44, inset 0 1px 0 rgba(255,255,255,.4)`:"0 2px 8px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.4)",
