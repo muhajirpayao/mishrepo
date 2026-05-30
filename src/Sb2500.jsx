@@ -15,9 +15,9 @@ const SYMBOLS = [
     id: "lollipop",
     img: lollipopImg,
     label: "Lollipop",
-    color: "#ff69b4",
+    // color: "#ff69b4",
     scatter: true,
-    scale: 5.0,
+    scale: 1.35,
     mult: {8:0,9:0,10:0,11:0,12:36.4,13:50,14:100,15:150,16:200,17:750}
   },
   {
@@ -301,7 +301,7 @@ function SymCell({ cell, isWin, isBomb, animKey, comboLevel }) {
   },[isBomb]);
 
   const isScatter = s.scatter;
-  const imgScale = isScatter ? 1.85 : 1.0;
+  const imgScale = isScatter ? 1.85 : 1;
 
   // Combo glow intensity
   const comboGlow = comboLevel > 2 ? `0 0 ${8 + comboLevel*4}px ${s.color}cc` : "";
@@ -328,8 +328,8 @@ function SymCell({ cell, isWin, isBomb, animKey, comboLevel }) {
       {/* Symbol image */}
       <div style={{
         position:"relative",
-        width:`${imgScale * 70}%`,
-        height:`${imgScale * 70}%`,
+        width: `${Math.min(imgScale * 60, 95)}%`,
+        width: `${Math.min(imgScale * 60, 95)}%`,
         display:"flex", alignItems:"center", justifyContent:"center",
         transform: landed
           ? (popping ? "scale(0) rotate(15deg)" : isWin ? "scale(1.08)" : "scale(1)")
