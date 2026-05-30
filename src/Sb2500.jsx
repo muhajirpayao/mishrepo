@@ -17,10 +17,11 @@ const SYMBOLS = [
     label: "Lollipop",
     color: "#ff69b4",
     scatter: true,
-    scale: 2.0,
+    scale: 5.0,
     mult: {8:0,9:0,10:0,11:0,12:36.4,13:50,14:100,15:150,16:200,17:750}
   },
   {
+    scale: 1.15,
     id: "heart",
     img: heartImg,
     label: "Heart",
@@ -29,6 +30,7 @@ const SYMBOLS = [
     mult: {8:5,9:8,10:12,11:16,12:25,13:50,14:100,15:200,16:400,17:1000}
   },
   {
+    scale: 1.15,
     id: "candy_blue",
     img: candyBlueImg,
     label: "Blue Candy",
@@ -37,6 +39,7 @@ const SYMBOLS = [
     mult: {8:3,9:5,10:8,11:11,12:15,13:30,14:60,15:120,16:250,17:600}
   },
   {
+    scale: 1.15,
     id: "grape",
     img: grapeImg,
     label: "Grape",
@@ -45,6 +48,7 @@ const SYMBOLS = [
     mult: {8:1.5,9:2.5,10:4,11:6,12:10,13:20,14:40,15:80,16:150,17:400}
   },
   {
+    scale: 1.15,
     id: "apple",
     img: appleImg,
     label: "Apple",
@@ -53,6 +57,7 @@ const SYMBOLS = [
     mult: {8:1,9:1.5,10:3,11:5,12:8,13:15,14:30,15:60,16:100,17:250}
   },
   {
+    scale: 1.15,
     id: "watermelon",
     img: watermelonImg,
     label: "Watermelon",
@@ -61,6 +66,7 @@ const SYMBOLS = [
     mult: {8:0.8,9:1.2,10:2,11:3.5,12:6,13:12,14:25,15:50,16:80,17:200}
   },
   {
+    scale: 1,
     id: "plum",
     img: plumImg,
     label: "Plum",
@@ -69,6 +75,7 @@ const SYMBOLS = [
     mult: {8:0.5,9:0.8,10:1.5,11:2.5,12:4,13:8,14:16,15:32,16:60,17:150}
   },
   {
+    scale: 1.15,
     id: "banana",
     img: bananaImg,
     label: "Banana",
@@ -271,6 +278,7 @@ function BombBadge({ value, exploding }) {
 // ── SYMBOL CELL ──
 function SymCell({ cell, isWin, isBomb, animKey, comboLevel }) {
   const s = cell.sym;
+  
   const [landed, setLanded] = useState(false);
   const [popping, setPopping] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
@@ -320,8 +328,8 @@ function SymCell({ cell, isWin, isBomb, animKey, comboLevel }) {
       {/* Symbol image */}
       <div style={{
         position:"relative",
-        width:`${imgScale * 92}%`,
-        height:`${imgScale * 92}%`,
+        width:`${imgScale * 70}%`,
+        height:`${imgScale * 70}%`,
         display:"flex", alignItems:"center", justifyContent:"center",
         transform: landed
           ? (popping ? "scale(0) rotate(15deg)" : isWin ? "scale(1.08)" : "scale(1)")
