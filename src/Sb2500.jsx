@@ -84,15 +84,24 @@ function findClusters(grid) {
 function countScatters(grid){let n=0;grid.forEach(row=>row.forEach(c=>{if(c.sym.scatter)n++;}));return n;}
 function getMultiplier(sym,size){const cl=Math.min(size,17);for(let i=cl;i>=8;i--){if(sym.mult[i]!==undefined)return sym.mult[i];}return 0;}
 
+// Odds: 15% no bomb, 55% 1 bomb, 30% 2 bombs — spread across different rows
 function spawnBombs(grid){
+  const rng=Math.random();
+  const count=rng<0.15?0:rng<0.70?1:2;
+  if(count===0) return grid;
   const g=grid.map(row=>row.map(c=>({...c})));
-  const count=Math.floor(Math.random()*3)+1;
-  const placed=new Set();
-  for(let i=0;i<count;i++){
-    let r,c,k;
-    do{r=Math.floor(Math.random()*ROWS);c=Math.floor(Math.random()*COLS);k=`${r},${c}`;}while(placed.has(k)||g[r][c].sym.scatter);
-    placed.add(k);
+  const allCells=[];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(!g[r][c].sym.scatter) allCells.push([r,c]);
+  for(let i=allCells.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[allCells[i],allCells[j]]=[allCells[j],allCells[i]];}
+  const placed=new Set(); const usedRows=new Set(); let placed2=0;
+  for(const [r,c] of allCells){
+    if(placed2>=count) break;
+    const k=`${r},${c}`;
+    if(placed.has(k)) continue;
+    if(count===2&&usedRows.has(r)) continue;
+    placed.add(k); usedRows.add(r);
     g[r][c]={...g[r][c],bomb:BOMB_VALUES[Math.floor(Math.random()*BOMB_VALUES.length)]};
+    placed2++;
   }
   return g;
 }
@@ -153,85 +162,39 @@ function SymCell({cell,isWin,isBomb,animKey,comboLevel}){
   const isScatter=s.scatter;
   const imgScale=isScatter?1.85:1;
   return(
-<div
-  style={{
-    position: "relative",
-    width: `${Math.min(imgScale * 60, 95)}%`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transform: landed
-      ? (
-          popping
-            ? "scale(0) rotate(15deg)"
-            : isWin
-            ? "scale(1.08)"
-            : "scale(1)"
-        )
-      : `translateY(${(cell.dropFrom || -2) * 58}px) scale(0.7)`,
-    opacity: landed ? (popping ? 0 : 1) : 0,
-    transition:
-      landed && !popping
-        ? `transform 0.32s cubic-bezier(.22,1.5,.36,1) ${
-            (cell.sym.dropDelay || 0) * 0.8
-          }s, opacity 0.15s ${
-            (cell.sym.dropDelay || 0) * 0.8
-          }s`
-        : popping
-        ? "transform 0.18s ease-in, opacity 0.18s ease-in"
-        : "none",
-    zIndex: 2,
-    filter: isWin
-      ? `drop-shadow(0 0 8px ${s.color}) drop-shadow(0 0 16px ${s.color}88) brightness(1.2)`
-      : isScatter
-      ? "drop-shadow(0 0 10px #ff69b488) brightness(1.1)"
-      : "drop-shadow(0 2px 5px rgba(0,0,0,0.4)) brightness(1.05)",
-    willChange: "transform,opacity",
-  }}
->
-  <img
-    src={s.img}
-    alt={s.label}
-    style={{
-      width: "100%",
-      height: "100%",
-      objectFit: "contain",
-      pointerEvents: "none",
-      display: "block",
-      mixBlendMode: "multiply",
-    }}
-  />
-
-  {isWin && (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: "-110%",
-        width: "55%",
-        height: "100%",
-        background:
-          "linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)",
-        animation: "sbSheen 1s ease-in-out infinite",
-        pointerEvents: "none",
-      }}
-    />
-  )}
-
-  {isWin && comboLevel >= 2 && (
-    <div
-      style={{
-        position: "absolute",
-        inset: -6,
-        borderRadius: "50%",
-        border: `2px solid ${s.color}`,
-        animation: "sbComboRing 0.5s ease-out infinite",
-        opacity: 0.7,
-        pointerEvents: "none",
-      }}
-    />
-  )}
-</div>
+    <div style={{position:"relative",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center",overflow:"visible"}}>
+      {isWin&&<div style={{position:"absolute",inset:1,borderRadius:8,background:`radial-gradient(circle,${s.color}40,transparent 70%)`,animation:"sbWinPulse 0.4s ease-in-out infinite alternate",zIndex:1}}/>}
+      <div style={{
+        position: "relative",
+        width: `${Math.min(imgScale * 60, 95)}%`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transform: landed
+          ? (popping ? "scale(0) rotate(15deg)" : isWin ? "scale(1.08)" : "scale(1)")
+          : `translateY(${(cell.dropFrom || -2) * 58}px) scale(0.7)`,
+        opacity: landed ? (popping ? 0 : 1) : 0,
+        transition: landed && !popping
+          ? `transform 0.32s cubic-bezier(.22,1.5,.36,1) ${(cell.sym.dropDelay || 0) * 0.8}s, opacity 0.15s ${(cell.sym.dropDelay || 0) * 0.8}s`
+          : popping
+            ? "transform 0.18s ease-in, opacity 0.18s ease-in"
+            : "none",
+        zIndex: 2,
+        filter: isWin
+          ? `drop-shadow(0 0 8px ${s.color}) drop-shadow(0 0 16px ${s.color}88) brightness(1.2)`
+          : isScatter
+            ? `drop-shadow(0 0 10px #ff69b488) brightness(1.1)`
+            : `drop-shadow(0 2px 5px rgba(0,0,0,0.4)) brightness(1.05)`,
+        willChange: "transform,opacity",
+      }}>
+        <img src={s.img} alt={s.label} style={{ width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none", display: "block", mixBlendMode: "multiply" }} />
+        {isWin&&<div style={{position:"absolute",top:0,left:"-110%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)",animation:"sbSheen 1s ease-in-out infinite",pointerEvents:"none"}}/>}
+        {isWin&&comboLevel>=2&&<div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${s.color}`,animation:"sbComboRing 0.5s ease-out infinite",opacity:0.7,pointerEvents:"none"}}/>}
+      </div>
+      {cell.bomb&&<BombBadge value={cell.bomb} exploding={isBomb}/>}
+      {isScatter&&!popping&&<div style={{position:"absolute",inset:-4,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,105,180,0.25),transparent 70%)",animation:"sbScatterHalo 2s ease-in-out infinite alternate",pointerEvents:"none",zIndex:0}}/>}
+      {showParticles&&<Particles active color={s.color} count={16}/>}
+    </div>
   );
 }
 
@@ -500,6 +463,7 @@ export default function SweetBonanza2500() {
   const [showPaytable, setShowPaytable] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [spinRotation, setSpinRotation] = useState(0);
+  const [spinResult, setSpinResult] = useState(null); // {counts:{symId:count}, totalWin}
 
   const winResolveRef = useRef(null);
   const spinningRef = useRef(false);
@@ -647,7 +611,7 @@ export default function SweetBonanza2500() {
     spinningRef.current=true; setSpinning(true);
     setWinOverlay(null);
     setWinCells(new Set()); setBombCells(new Set());
-    setRoundWin(0); setComboLevel(0); // reset win each manual spin
+    setRoundWin(0); setComboLevel(0); setSpinResult(null); // reset win each manual spin
     setBalance(b=>Math.round((b-bet)*100)/100);
     setSpinRotation(r=>r+720);
     await animateSpin(false);
@@ -656,6 +620,14 @@ export default function SweetBonanza2500() {
     setGrid(finalGrid); setGridKey(k=>k+1);
     await delay(200);
     await processTumble(finalGrid,1,0,false);
+    // Build spin result for fruit display
+    const counts={};
+    finalGrid.forEach(row=>row.forEach(cell=>{
+      const id=cell.sym.id;
+      counts[id]=(counts[id]||{count:0,sym:cell.sym});
+      counts[id].count++;
+    }));
+    setSpinResult(counts);
     spinningRef.current=false; setSpinning(false);
   },[balance,bet,turbo,dcOn]);
 
@@ -710,7 +682,7 @@ export default function SweetBonanza2500() {
 
   return(
     <div style={{
-      width:"100vw",height:"100vh",overflow:"hidden",
+      width:"100vw",height:"100vh",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",
       position:"fixed",top:0,left:0,
       backgroundImage:`url('https://images.api.kansino.nl/cms/PRG_Sweet_Bonanza1000_bg_7c4f5e878a.jpg')`,
       backgroundSize:"cover",backgroundPosition:"center",
@@ -741,7 +713,7 @@ export default function SweetBonanza2500() {
             src={sweetBonanzaLogo}
             alt="Sweet Bonanza"
             onError={e=>{ e.target.style.display='none'; e.target.nextSibling.style.display='block'; }}
-            style={{height:38,objectFit:"contain",filter:"drop-shadow(0 2px 12px rgba(255,100,200,.7))",maxWidth:"70vw"}}
+            style={{height:58,objectFit:"contain",filter:"drop-shadow(0 2px 12px rgba(255,100,200,.7))",maxWidth:"70vw"}}
           />
           {/* Fallback text logo */}
           <div style={{display:"none",fontWeight:900,fontSize:"clamp(18px,5vw,28px)",background:"linear-gradient(135deg,#ff6bcd,#ffd700,#ff6bcd)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:3,filter:"drop-shadow(0 2px 10px rgba(255,107,205,.8))",fontFamily:"'Arial Black',sans-serif"}}>
@@ -785,7 +757,7 @@ export default function SweetBonanza2500() {
           padding:"3px 4px 2px",
           position:"relative",
           display:"flex",flexDirection:"column",
-          overflow:"hidden",
+          overflowY:"auto",WebkitOverflowScrolling:"touch",
           transition:"all .9s",
         }}>
           <div style={{textAlign:"center",fontSize:7,color:inFreeSpins?"rgba(255,180,255,.55)":"rgba(80,40,100,.5)",fontWeight:700,marginBottom:1,letterSpacing:.4,flexShrink:0}}>
@@ -819,92 +791,122 @@ export default function SweetBonanza2500() {
 
       {/* ── BOTTOM AREA ── */}
       {!inFreeSpins&&fsPhase==="none"&&(
-        <div style={{width:"100%",padding:"0 8px 8px",zIndex:10,flexShrink:0}}>
-          <div style={{background:"rgba(8,2,22,0.92)",backdropFilter:"blur(18px)",borderRadius:18,border:"1.5px solid rgba(255,255,255,.1)",boxShadow:"0 -3px 24px rgba(0,0,0,.5)",padding:"8px 10px",display:"flex",flexDirection:"column",gap:6}}>
+        <div style={{width:"100%",padding:"0 6px 6px",zIndex:10,flexShrink:0}}>
+          <div style={{background:"rgba(8,2,22,0.92)",backdropFilter:"blur(18px)",borderRadius:18,border:"1.5px solid rgba(255,255,255,.1)",boxShadow:"0 -3px 24px rgba(0,0,0,.5)",padding:"7px 8px 6px",display:"flex",flexDirection:"column",gap:5}}>
 
-            {/* BUY BUTTONS */}
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={handleBuyFreeSpins} style={{flex:1,background:"linear-gradient(135deg,#8b0000,#c0392b,#8b0000)",border:"1.5px solid rgba(255,130,80,.4)",borderRadius:12,padding:"8px 6px",color:"#fff",fontWeight:900,cursor:"pointer",textAlign:"center",boxShadow:"0 3px 14px rgba(192,57,43,.5)"}}>
-                <div style={{fontSize:8,opacity:.75,letterSpacing:.5}}>BUY FREE SPINS</div>
-                <div style={{fontSize:11,fontWeight:900,color:"#ffe066",marginTop:1}}>{fmt(bet*100)}</div>
-              </button>
-              <button onClick={handleBuySuperSpins} style={{flex:1,background:"linear-gradient(135deg,#7a4000,#e67e22,#7a4000)",border:"1.5px solid rgba(255,200,80,.4)",borderRadius:12,padding:"8px 6px",color:"#fff",fontWeight:900,cursor:"pointer",textAlign:"center",boxShadow:"0 3px 14px rgba(230,126,34,.5)"}}>
-                <div style={{fontSize:8,opacity:.75,letterSpacing:.5}}>BUY SUPER SPINS</div>
-                <div style={{fontSize:11,fontWeight:900,color:"#ffe066",marginTop:1}}>{fmt(bet*500)}</div>
-              </button>
-            </div>
+            {/* ── ROW 1: BUY NORMAL | SPIN | BUY SUPER ── */}
+            <div style={{display:"flex",gap:5,alignItems:"stretch"}}>
 
-            {/* PAYTABLE */}
-            <button onClick={()=>setShowPaytable(true)} style={{width:"100%",background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,255,255,.12)",borderRadius:12,padding:"6px 10px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                {NORMAL_SYMS.slice(0,6).map(s=>(
-                  <div key={s.id} style={{width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <img src={s.img} alt={s.label} style={{width:20,height:20,objectFit:"contain",filter:`drop-shadow(0 0 3px ${s.color}88)`}}/>
-                  </div>
-                ))}
-                <div style={{width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <img src={lollipopImg} alt="Scatter" style={{width:20,height:20,objectFit:"contain",filter:"drop-shadow(0 0 3px rgba(255,105,180,.8))"}}/>
-                </div>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:4}}>
-                <span style={{fontSize:9,color:"rgba(255,200,150,.7)",fontWeight:700,letterSpacing:.5}}>PAYTABLE</span>
-                <span style={{fontSize:11,color:"rgba(255,255,255,.5)"}}>›</span>
-              </div>
-            </button>
-
-            {/* SPIN ROW — bet icon | SPIN | turbo+dc */}
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              {/* Bet icon button */}
-              <button onClick={()=>!spinning&&setShowBetPicker(true)} disabled={spinning} style={{flexShrink:0,width:46,height:46,borderRadius:"50%",background:"rgba(255,255,255,.08)",border:"1.5px solid rgba(255,215,0,.35)",cursor:spinning?"not-allowed":"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="8"/><path d="M12 6v2"/><path d="M12 16v2"/><path d="M8 10h1.5a2.5 2.5 0 0 1 0 5H8"/><path d="M14 10h2"/>
-                </svg>
-                <span style={{fontSize:7,color:"#ffd700",fontWeight:700,letterSpacing:.2}}>{fmt(bet).replace("₱","₱")}</span>
+              {/* BUY NORMAL */}
+              <button onClick={handleBuyFreeSpins} style={{flex:"0 0 72px",background:"linear-gradient(160deg,#5b0020,#a0001a)",border:"1.5px solid rgba(255,100,80,.5)",borderRadius:12,padding:"6px 4px",color:"#fff",fontWeight:900,cursor:"pointer",textAlign:"center",boxShadow:"0 3px 14px rgba(160,0,26,.5)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                <div style={{fontSize:7,opacity:.7,letterSpacing:.4,lineHeight:1.2}}>BUY</div>
+                <div style={{fontSize:8,fontWeight:900,lineHeight:1.2}}>FREE SPINS</div>
+                <div style={{fontSize:10,fontWeight:900,color:"#ffe066",marginTop:2}}>{fmt(bet*100)}</div>
               </button>
 
-              {/* SPIN — rotate icon */}
+              {/* SPIN — no background, big rotate icon */}
               <button onClick={doSpin} disabled={spinning} style={{
-                flex:1, height:46,
-                background:spinning?"rgba(60,20,30,.5)":"linear-gradient(135deg,#c0392b,#8b0000,#c0392b)",
-                border:spinning?"none":"2px solid rgba(255,150,120,.4)",
+                flex:1, minHeight:58,
+                background:"none", border:"none",
                 borderRadius:50, cursor:spinning?"not-allowed":"pointer",
-                display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                boxShadow:spinning?"none":"0 4px 20px rgba(192,57,43,.6)",
+                display:"flex",alignItems:"center",justifyContent:"center",
                 transition:"all .2s",
-                animation:!spinning?"sbSpinBtnGlow 2s ease-in-out infinite alternate":"none",
               }}>
                 <svg
-                  width="22" height="22" viewBox="0 0 24 24" fill="none"
-                  stroke={spinning?"rgba(150,80,80,.5)":"#fff"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                  style={{transition:"transform .6s ease",transform:`rotate(${spinRotation}deg)`}}
+                  width="56" height="56" viewBox="0 0 24 24" fill="none"
+                  stroke={spinning?"rgba(140,80,80,.45)":"#fff"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                  style={{transition:"transform .6s ease",transform:`rotate(${spinRotation}deg)`,filter:spinning?"none":"drop-shadow(0 0 14px rgba(255,120,120,1)) drop-shadow(0 0 28px rgba(255,50,50,.7))"}}
                 >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                   <polyline points="21 3 21 9 15 9"/>
                 </svg>
-                {spinning&&<span style={{fontSize:11,color:"rgba(180,100,100,.5)",fontWeight:700,letterSpacing:1}}>...</span>}
               </button>
 
-              {/* Turbo + DC stacked */}
-              <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-                <button onClick={()=>setTurbo(t=>!t)} style={{width:46,height:20,borderRadius:8,background:turbo?"linear-gradient(135deg,#e67e22,#d35400)":"rgba(255,255,255,.07)",border:turbo?"1.5px solid #e67e22":"1.5px solid rgba(255,255,255,.12)",color:turbo?"#fff":"rgba(255,200,150,.7)",fontWeight:700,fontSize:8,cursor:"pointer",letterSpacing:.3}}>⚡ TURBO</button>
-                <button onClick={()=>setDcOn(d=>!d)} style={{width:46,height:20,borderRadius:8,background:dcOn?"linear-gradient(135deg,#2980b9,#1a5276)":"rgba(255,255,255,.07)",border:dcOn?"1.5px solid #2980b9":"1.5px solid rgba(255,255,255,.12)",color:dcOn?"#fff":"rgba(200,220,255,.7)",fontWeight:700,fontSize:8,cursor:"pointer",letterSpacing:.3}}>2× CHC</button>
+              {/* BUY SUPER */}
+              <button onClick={handleBuySuperSpins} style={{flex:"0 0 72px",background:"linear-gradient(160deg,#5a2800,#b05000)",border:"1.5px solid rgba(255,180,60,.4)",borderRadius:12,padding:"6px 4px",color:"#fff",fontWeight:900,cursor:"pointer",textAlign:"center",boxShadow:"0 3px 14px rgba(180,80,0,.5)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                <div style={{fontSize:7,opacity:.7,letterSpacing:.4,lineHeight:1.2}}>BUY SUPER</div>
+                <div style={{fontSize:8,fontWeight:900,lineHeight:1.2}}>FREE SPINS</div>
+                <div style={{fontSize:10,fontWeight:900,color:"#ffe066",marginTop:2}}>{fmt(bet*500)}</div>
+              </button>
+            </div>
+
+            {/* ── FRUIT RESULT PANEL — violet bg, lollipop glow border ── */}
+            <div style={{
+              background:"linear-gradient(160deg,#2a004a,#4a0070,#2a004a)",
+              borderRadius:14,
+              border:"2px solid transparent",
+              backgroundClip:"padding-box",
+              boxShadow:"0 0 0 2px rgba(255,105,180,.7), 0 0 16px rgba(255,105,180,.35), 0 0 6px rgba(255,50,50,.4)",
+              padding:"6px 8px",
+              position:"relative",
+            }}>
+              {/* Animated lollipop glow border */}
+              <div style={{position:"absolute",inset:-1,borderRadius:15,background:"linear-gradient(135deg,#ff69b4,#ff1a1a,#ff69b4,#ff1a1a)",padding:1,zIndex:-1,animation:"sbLolliBorder 2s linear infinite"}}/>
+              <div style={{fontSize:8,color:"rgba(255,200,255,.6)",fontWeight:700,letterSpacing:1,textAlign:"center",marginBottom:4}}>RESULT</div>
+              {/* 3×3 grid of fruits — top 9 symbols by count from last spin */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:4}}>
+                {(()=>{
+                  // Build ordered list: scatter first if present, then by count desc
+                  const allSyms = [...NORMAL_SYMS.map(s=>({...s,isScatter:false})), {...SCATTER,isScatter:true,color:"#ff69b4"}];
+                  const slots = allSyms.slice(0,9); // always show 9 slots
+                  return slots.map((sym,i)=>{
+                    const entry = spinResult ? spinResult[sym.id] : null;
+                    const count = entry ? entry.count : 0;
+                    const winAmt = count>=8 ? getMultiplier(sym, Math.min(count,17))*bet : 0;
+                    const hasWin = winAmt > 0;
+                    return (
+                      <div key={sym.id} style={{
+                        background: hasWin ? `linear-gradient(135deg,${sym.color}30,${sym.color}18)` : "rgba(255,255,255,.04)",
+                        borderRadius:8,
+                        border: hasWin ? `1px solid ${sym.color}99` : "1px solid rgba(255,255,255,.1)",
+                        padding:"4px 3px",
+                        display:"flex",alignItems:"center",gap:4,
+                        boxShadow: hasWin ? `0 0 10px ${sym.color}55` : "none",
+                        transition:"all .3s",
+                      }}>
+                        <div style={{width:28,height:28,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <img src={sym.img} alt={sym.label} style={{width:26,height:26,objectFit:"contain",filter:hasWin?`drop-shadow(0 0 6px ${sym.color})`:"none"}}/>
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:10,fontWeight:900,color:count>0?"#fff":"rgba(255,255,255,.25)",lineHeight:1}}>
+                            {count>0?count:"—"}
+                          </div>
+                          {hasWin?(
+                            <div style={{fontSize:8,fontWeight:900,color:"#ffd700",lineHeight:1,marginTop:1,textShadow:"0 0 8px rgba(255,215,0,.8)"}}>{fmt(winAmt)}</div>
+                          ):(
+                            <div style={{fontSize:7,color:`${sym.color}88`,lineHeight:1,marginTop:1}}>{sym.label.substring(0,5)}</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
-            {/* FOOTER — I | Credits | Current Bet */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.07)",paddingTop:5}}>
-              <button onClick={()=>setShowRules(true)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4,padding:"2px 4px"}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span style={{fontSize:8,color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:.3}}>RULES</span>
+            {/* ── CONTROLS ROW: bet | turbo+dc ── */}
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              {/* Bet icon */}
+              <button onClick={()=>!spinning&&setShowBetPicker(true)} disabled={spinning} style={{flexShrink:0,width:44,height:36,borderRadius:10,background:"rgba(255,255,255,.07)",border:"1.5px solid rgba(255,215,0,.35)",cursor:spinning?"not-allowed":"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="8"/><path d="M12 6v2"/><path d="M12 16v2"/><path d="M8 10h1.5a2.5 2.5 0 0 1 0 5H8"/><path d="M14 10h2"/>
+                </svg>
+                <span style={{fontSize:7,color:"#ffd700",fontWeight:700}}>{fmt(bet)}</span>
               </button>
-              <div style={{textAlign:"center"}}>
-                <span style={{fontSize:8,color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:.3}}>CREDITS  </span>
-                <span style={{fontSize:9,color:"rgba(255,200,100,.8)",fontWeight:900}}>{fmt(balance)}</span>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <span style={{fontSize:8,color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:.3}}>BET  </span>
-                <span style={{fontSize:9,color:"rgba(255,200,100,.8)",fontWeight:900}}>{fmt(bet)}</span>
-              </div>
+              {/* Turbo */}
+              <button onClick={()=>setTurbo(t=>!t)} style={{flex:1,height:36,borderRadius:10,background:turbo?"linear-gradient(135deg,#e67e22,#d35400)":"rgba(255,255,255,.07)",border:turbo?"1.5px solid #e67e22":"1.5px solid rgba(255,255,255,.12)",color:turbo?"#fff":"rgba(255,200,150,.7)",fontWeight:700,fontSize:9,cursor:"pointer"}}>⚡ TURBO</button>
+              {/* DC */}
+              <button onClick={()=>setDcOn(d=>!d)} style={{flex:1,height:36,borderRadius:10,background:dcOn?"linear-gradient(135deg,#2980b9,#1a5276)":"rgba(255,255,255,.07)",border:dcOn?"1.5px solid #2980b9":"1.5px solid rgba(255,255,255,.12)",color:dcOn?"#fff":"rgba(200,220,255,.7)",fontWeight:700,fontSize:9,cursor:"pointer"}}>2× CHC</button>
+            </div>
+
+            {/* FOOTER — I | Credits | Current Bet */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.07)",paddingTop:4}}>
+              <button onClick={()=>setShowRules(true)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:3,padding:"2px 4px"}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span style={{fontSize:8,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.3}}>RULES</span>
+              </button>
+              <div><span style={{fontSize:8,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.3}}>CREDITS  </span><span style={{fontSize:9,color:"rgba(255,200,100,.8)",fontWeight:900}}>{fmt(balance)}</span></div>
+              <div><span style={{fontSize:8,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.3}}>BET  </span><span style={{fontSize:9,color:"rgba(255,200,100,.8)",fontWeight:900}}>{fmt(bet)}</span></div>
             </div>
           </div>
         </div>
@@ -967,6 +969,8 @@ export default function SweetBonanza2500() {
         @keyframes sbScreenShake2{0%,100%{transform:translate(0,0);}15%{transform:translate(-6px,3px);}30%{transform:translate(6px,-4px);}45%{transform:translate(-4px,5px);}60%{transform:translate(5px,-3px);}75%{transform:translate(-3px,4px);}90%{transform:translate(3px,-2px);}}
         @keyframes sbScreenShake3{0%,100%{transform:translate(0,0);}10%{transform:translate(-10px,5px);}20%{transform:translate(10px,-6px);}30%{transform:translate(-7px,8px);}40%{transform:translate(8px,-5px);}50%{transform:translate(-6px,7px);}60%{transform:translate(7px,-4px);}70%{transform:translate(-5px,6px);}80%{transform:translate(5px,-3px);}90%{transform:translate(-3px,4px);}}
         @keyframes sbParticle{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(calc(cos(var(--angle))*var(--dist)),calc(sin(var(--angle))*var(--dist))) scale(0);opacity:0;}}
+        @keyframes sbLolliBorder{0%{background-position:0%;}100%{background-position:200%;}}
+        @keyframes sbLolliGlow{0%,100%{box-shadow:0 0 0 2px rgba(255,105,180,.8),0 0 16px rgba(255,105,180,.4);}50%{box-shadow:0 0 0 2px rgba(255,50,50,.9),0 0 20px rgba(255,50,50,.5);}}
       `}</style>
     </div>
   );
