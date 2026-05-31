@@ -750,6 +750,7 @@ function SweetBonanzaGame({ onClose }) {
 /* ══════════════════════════════════════════════════════════════
    MAIN APP
 ══════════════════════════════════════════════════════════════ */
+
 export default function CasinoPlus() {
   const [activeNav, setActiveNav] = useState("Games");
   const [category, setCategory] = useState("Slot Games");
@@ -773,6 +774,14 @@ export default function CasinoPlus() {
     const matchProv = provider==="ALL" || g.provider===provider;
     return matchSearch && matchProv;
   });
+
+  if (playingGame?.id === "sweetbonanza") {
+  return (
+    <SweetBonanza2500
+      onClose={() => setPlayingGame(null)}
+    />
+  );
+}
 
   return (
     <div style={{
@@ -879,7 +888,7 @@ export default function CasinoPlus() {
 
       {/* Sweet Bonanza Modal */}
      
-        {playingGame?.id === "sweetbonanza" && <SweetBonanza2500 />}
+        {/* {playingGame?.id === "sweetbonanza" && <SweetBonanza2500 />} */}
 
       {/* Login / Register Modal */}
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} />}
